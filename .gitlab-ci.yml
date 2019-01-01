@@ -16,7 +16,7 @@ build:
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
   artifacts:
     paths:
-    - hurrdurr
+    - alertsnitch
   script:
   - mkdir -p /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
   - cd /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
