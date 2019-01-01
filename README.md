@@ -56,6 +56,6 @@ by the alert manager.
 
 ## Grafana Compatibility
 
-AlertSnitch writes alerts in such a way thay they can be expored using
+AlertSnitch writes alerts in such a way thay they can be explored using
 Grafana's MySQL Data Source plugin. Refer to Grafana documentation for
 further instructions.
