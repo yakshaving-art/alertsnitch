@@ -11,6 +11,12 @@ cache:
   paths:
   - vendor
 
+before_script:
+  - mkdir -p /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
+  - cd /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
+  - ln -s ${CI_PROJECT_DIR}
+  - cd /go/src/gitlab.com/${CI_PROJECT_PATH}
+
 build:
   stage: build
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
@@ -18,12 +24,23 @@ build:
     paths:
     - alertsnitch
   script:
-  - mkdir -p /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
-  - cd /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
-  - ln -s ${CI_PROJECT_DIR}
-  - cd /go/src/gitlab.com/${CI_PROJECT_PATH}
   - dep ensure
-  - make test build
+  - make test
+  - make build
+
+build_arm:
+  stage: build
+  artifacts:
+    paths:
+    - alertsnitch-arm
+  tags:
+  - armv6
+  script:
+  - dep ensure
+  - GOOS=linux GOARCH=arm GOARM=6 make build
+  - mv alertsnitch alertsnitch-arm
+  # tags:
+  # - armv6
 
 docker_image:
   stage: docker_image
@@ -32,6 +49,7 @@ docker_image:
   script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile.amd64 --destination $CI_REGISTRY_IMAGE:latest
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile.armv6 --destination $CI_REGISTRY_IMAGE:latest-armv6
   only:
   - master
 
