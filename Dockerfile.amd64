@@ -4,6 +4,6 @@ RUN apk --no-cache add ca-certificates
 
 COPY alertsnitch /
 
-EXPORT 8080
+EXPOSE 8080
  
 ENTRYPOINT [ "/alertsnitch" ]
