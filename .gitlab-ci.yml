@@ -29,16 +29,18 @@ build:
   - make build
 
 build_arm:
+  image: golang:1.11
   stage: build
   artifacts:
     paths:
     - alertsnitch-arm
   script:
+  - apk --no-cache add curl make
   - dep ensure
   - GOOS=linux GOARCH=arm GOARM=6 make build
   - mv alertsnitch alertsnitch-arm
-  # tags:
-  # - armv6
+  tags:
+  - armv6
 
 docker_image:
   stage: docker_image
