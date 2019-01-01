@@ -29,13 +29,13 @@ build:
   - make build
 
 build_arm:
-  image: golang:1.11
+  image: arm32v6/alpine:3.7
   stage: build
   artifacts:
     paths:
     - alertsnitch-arm
   script:
-  - apk --no-cache add curl make
+  - apk --no-cache add curl make golang
   - dep ensure
   - GOOS=linux GOARCH=arm GOARM=6 make build
   - mv alertsnitch alertsnitch-arm
