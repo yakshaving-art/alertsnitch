@@ -4,8 +4,8 @@ stages:
   - docker_image
   - release
 
-variables:
-  CGO_ENABLED: 0
+# variables:
+#   CGO_ENABLED: 0
 
 cache:
   paths:
