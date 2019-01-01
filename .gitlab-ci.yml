@@ -36,6 +36,7 @@ build_arm:
     - alertsnitch-arm
   script:
   - apk --no-cache add curl make go
+  - go get github.com/golang/dep/cmd/dep
   - dep ensure
   - GOOS=linux GOARCH=arm GOARM=6 make build
   - mv alertsnitch alertsnitch-arm
