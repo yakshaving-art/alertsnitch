@@ -33,8 +33,6 @@ build_arm:
   artifacts:
     paths:
     - alertsnitch-arm
-  tags:
-  - armv6
   script:
   - dep ensure
   - GOOS=linux GOARCH=arm GOARM=6 make build
