@@ -35,9 +35,10 @@ build_arm:
     paths:
     - alertsnitch-arm
   script:
+  - export GOPATH=/go
+  - export PATH="$PATH:$GOPATH/bin"
   - apk --no-cache add curl make go git musl-dev
   - go get github.com/golang/dep/cmd/dep
-  - export PATH="$PATH:$HOME/go/bin"
   - dep ensure
   - GOOS=linux GOARCH=arm GOARM=6 make build
   - mv alertsnitch alertsnitch-arm
