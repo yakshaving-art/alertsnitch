@@ -7,7 +7,9 @@ import (
 	"github.com/prometheus/alertmanager/template"
 )
 
-func parsePayload(payload []byte) (*template.Data, error) {
+// Parse gets a webhook payload and parses it returning a prometheus
+// template.Data object if successful
+func Parse(payload []byte) (*template.Data, error) {
 	d := template.Data{}
 	err := json.Unmarshal(payload, &d)
 	if err != nil {
