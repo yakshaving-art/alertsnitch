@@ -1,7 +1,6 @@
 image: registry.gitlab.com/yakshaving.art/go-builder:0.0.1
 stages:
   - build
-  - docker_image
   - release
 
 # variables:
@@ -11,12 +10,6 @@ cache:
   paths:
   - vendor
 
-before_script:
-  - mkdir -p /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
-  - cd /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
-  - ln -s ${CI_PROJECT_DIR}
-  - cd /go/src/gitlab.com/${CI_PROJECT_PATH}
-
 build:
   stage: build
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
@@ -24,26 +17,30 @@ build:
     paths:
     - alertsnitch
   script:
+  - mkdir -p /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
+  - cd /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
+  - ln -s ${CI_PROJECT_DIR}
+  - cd /go/src/gitlab.com/${CI_PROJECT_PATH}
   - dep ensure
   - make test
   - make build
 
-build_arm:
-  image: arm32v6/alpine:3.7
-  stage: build
-  artifacts:
-    paths:
-    - alertsnitch-arm
-  script:
-  - export GOPATH=/go
-  - export PATH="$PATH:$GOPATH/bin"
-  - apk --no-cache add curl make go git musl-dev
-  - go get github.com/golang/dep/cmd/dep
-  - dep ensure
-  - GOOS=linux GOARCH=arm GOARM=6 make build
-  - mv alertsnitch alertsnitch-arm
-  tags:
-  - armv6
+# build_arm:
+#   image: arm32v6/alpine:3.7
+#   stage: build
+#   artifacts:
+#     paths:
+#     - alertsnitch-arm
+#   script:
+#   - export GOPATH=/go
+#   - export PATH="$PATH:$GOPATH/bin"
+#   - apk --no-cache add curl make go git musl-dev
+#   - go get github.com/golang/dep/cmd/dep
+#   - dep ensure
+#   - GOOS=linux GOARCH=arm GOARM=6 make build
+#   - mv alertsnitch alertsnitch-arm
+#   tags:
+#   - armv6
 
 docker_image:
   stage: docker_image
@@ -52,16 +49,15 @@ docker_image:
   script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile.amd64 --destination $CI_REGISTRY_IMAGE:latest
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile.armv6 --destination $CI_REGISTRY_IMAGE:latest-armv6
   only:
   - master
 
-release:
-  stage: release
-  image:
-    name: registry.yakshaving.art:443/tools/kaniko-shell:latest
-  script:
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile.amd64 --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
-  only:
-  - tags
+# release:
+#   stage: release
+#   image:
+#     name: registry.yakshaving.art:443/tools/kaniko-shell:latest
+#   script:
+#     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+#     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile.amd64 --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+#   only:
+#   - tags
