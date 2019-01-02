@@ -39,6 +39,7 @@ func main() {
 	r.HandleFunc("/-/health", healthyProbe).Methods("GET")
 	r.Handle("/metrics", promhttp.Handler())
 
+	log.Println("Starting listener on", args.Address)
 	log.Fatal(http.ListenAndServe(args.Address, r))
 }
 
@@ -57,7 +58,7 @@ func webhookPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Webhook Payload:\n%#v\n", d)
+	log.Printf("Webhook Payload:\n%#v\n\nBody:\n%s", d, string(b))
 }
 
 func healthyProbe(w http.ResponseWriter, r *http.Request) {
