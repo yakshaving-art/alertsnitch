@@ -1,6 +1,7 @@
 image: registry.gitlab.com/yakshaving.art/go-builder:0.0.1
 stages:
   - build
+  - docker_image
   - release
 
 # variables:
