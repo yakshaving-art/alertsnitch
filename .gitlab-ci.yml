@@ -20,6 +20,7 @@ mysql_build:
   services:
   - mysql
   script:
+  - mysql -V
   - cat db.d/01-bootstrap.sql | mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}"
 
 build:
@@ -28,12 +29,13 @@ build:
   artifacts:
     paths:
     - alertsnitch
-  script:
+  before_script:
   - mkdir -p /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
   - cd /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
   - ln -s ${CI_PROJECT_DIR}
   - cd /go/src/gitlab.com/${CI_PROJECT_PATH}
   - dep ensure
+  script:
   - make test build
 
 docker_image:
