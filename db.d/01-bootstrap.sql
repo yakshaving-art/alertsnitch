@@ -1,0 +1,1 @@
+select 'If you can see this you have connected to the MySQL database';
