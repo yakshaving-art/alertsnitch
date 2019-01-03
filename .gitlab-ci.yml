@@ -16,8 +16,7 @@ cache:
 
 mysql_build:
   image: mysql
-  stages:
-  - prepare
+  stage: prepare
   services:
   - mysql
   script:
