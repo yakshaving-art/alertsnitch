@@ -14,14 +14,14 @@ cache:
   paths:
   - vendor
 
-mysql_build:
+mysql_prepare:
   image: mysql
   stage: prepare
   services:
   - mysql
   script:
   - mysql -V
-  - cat db.d/01-bootstrap.sql | mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}"
+  - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}" < db.d/01-bootstrap.sql
 
 build:
   stage: build
