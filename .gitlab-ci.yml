@@ -1,15 +1,27 @@
 image: registry.gitlab.com/yakshaving.art/go-builder:0.0.1
 stages:
+  - prepare
   - build
   - docker_image
   - release
 
 variables:
   CGO_ENABLED: 0
+  MYSQL_DATABASE: alertsnitch
+  MYSQL_ROOT_PASSWORD: mysql
 
 cache:
   paths:
   - vendor
+
+mysql_build:
+  image: mysql
+  stages:
+  - prepare
+  services:
+  - mysql
+  script:
+  - cat db.d/01-bootstrap.sql | mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}"
 
 build:
   stage: build
@@ -23,8 +35,7 @@ build:
   - ln -s ${CI_PROJECT_DIR}
   - cd /go/src/gitlab.com/${CI_PROJECT_PATH}
   - dep ensure
-  - make test
-  - make build
+  - make test build
 
 docker_image:
   stage: docker_image
