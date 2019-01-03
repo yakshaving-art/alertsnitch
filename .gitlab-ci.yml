@@ -4,9 +4,6 @@ stages:
   - docker_image
   - release
 
-# variables:
-#   CGO_ENABLED: 0
-
 cache:
   paths:
   - vendor
@@ -25,23 +22,6 @@ build:
   - dep ensure
   - make test
   - make build
-
-# build_arm:
-#   image: arm32v6/alpine:3.7
-#   stage: build
-#   artifacts:
-#     paths:
-#     - alertsnitch-arm
-#   script:
-#   - export GOPATH=/go
-#   - export PATH="$PATH:$GOPATH/bin"
-#   - apk --no-cache add curl make go git musl-dev
-#   - go get github.com/golang/dep/cmd/dep
-#   - dep ensure
-#   - GOOS=linux GOARCH=arm GOARM=6 make build
-#   - mv alertsnitch alertsnitch-arm
-#   tags:
-#   - armv6
 
 docker_image:
   stage: docker_image
