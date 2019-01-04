@@ -1,3 +1,31 @@
+DELIMITER //
+CREATE PROCEDURE bootstrap()
+BEGIN
+  SET @exists := (SELECT 1 FROM information_schema.tables I WHERE I.table_name = "Model" AND I.table_schema = database());
+  IF @exists IS NULL THEN
+
+    CREATE TABLE `Model` (
+      `ID` enum('1') NOT NULL,
+      `version` VARCHAR(20) NOT NULL,
+      PRIMARY KEY (`ID`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+    INSERT INTO `Model` (`version`) VALUES ("0.0.1");
+
+  ELSE
+    SIGNAL SQLSTATE '42000' SET MESSAGE_TEXT='Model Table Exists, quitting...';
+  END IF;
+END;
+//
+DELIMITER ;
+
+-- Execute the procedure
+CALL bootstrap();
+
+-- Drop the procedure
+DROP PROCEDURE bootstrap;
+
+-- Create the rest of the tables
 CREATE TABLE `AlertGroup` (
 	`ID` INT NOT NULL AUTO_INCREMENT,
 	`timestamp` TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
@@ -66,11 +94,3 @@ CREATE TABLE `AlertAnnotation` (
     FOREIGN KEY (AlertID) REFERENCES Alert (ID) ON DELETE CASCADE,
 	PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-CREATE TABLE `Model` (
-  `ID` enum('1') NOT NULL,
-  `version` VARCHAR(20) NOT NULL,
-	PRIMARY KEY (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-INSERT INTO `Model` (`version`) VALUES ("0.0.1"); 
