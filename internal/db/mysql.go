@@ -40,9 +40,44 @@ func (d MySQLDB) Save(data *template.Data) error {
 			return fmt.Errorf("failed to insert into AlertGroups: %s", err)
 		}
 
-		_, err = r.LastInsertId() // alertGroupID
+		alertGroupID, err := r.LastInsertId() // alertGroupID
 		if err != nil {
 			return fmt.Errorf("failed to get AlertGroups inserted id: %s", err)
+		}
+
+		for k, v := range data.GroupLabels {
+			_, err := d.db.Exec(`
+				INSERT INTO GroupLabel (alertGroupID, GroupLabel, Value)
+				VALUES (?, ?, ?)`, alertGroupID, k, v)
+			if err != nil {
+				return fmt.Errorf("failed to insert into GroupLabel: %s", err)
+			}
+		}
+		for k, v := range data.CommonLabels {
+			_, err := d.db.Exec(`
+				INSERT INTO CommonLabel (alertGroupID, Label, Value)
+				VALUES (?, ?, ?)`, alertGroupID, k, v)
+			if err != nil {
+				return fmt.Errorf("failed to insert into CommonLabel: %s", err)
+			}
+		}
+		for k, v := range data.CommonAnnotations {
+			_, err := d.db.Exec(`
+				INSERT INTO CommonAnnotation (alertGroupID, Annotation, Value)
+				VALUES (?, ?, ?)`, alertGroupID, k, v)
+			if err != nil {
+				return fmt.Errorf("failed to insert into CommonAnnotation: %s", err)
+			}
+		}
+
+		for _, alert := range data.Alerts {
+			_, err := d.db.Exec(`
+				INSERT INTO Alert (alertGroupID, status, startsAt, endsAt, generatorURL)
+				VALUES (?, ?, ?, ?, ?)`, alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL)
+			if err != nil {
+				return fmt.Errorf("failed to insert into Alert: %s", err)
+			}
+
 		}
 
 		return nil
