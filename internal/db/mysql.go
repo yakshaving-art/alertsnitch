@@ -7,7 +7,7 @@ import (
 
 	"database/sql"
 
-	"github.com/prometheus/alertmanager/template"
+	"gitlab.com/yakshaving.art/alertsnitch/internal"
 )
 
 // SupportedModel stores the model that is supported by this application
@@ -37,11 +37,11 @@ func ConnectMySQL(dsn string) (*MySQLDB, error) {
 }
 
 // Save implements Storer interface
-func (d MySQLDB) Save(data *template.Data) error {
+func (d MySQLDB) Save(data *internal.AlertGroup) error {
 	return d.unitOfWork(func() error {
 		r, err := d.db.Exec(`
-			INSERT INTO AlertGroup (timestamp, receiver, status, externalURL)
-			VALUES (now(), ?, ?, ?)`, data.Receiver, data.Status, data.ExternalURL)
+			INSERT INTO AlertGroup (timestamp, receiver, status, externalURL, groupKey)
+			VALUES (now(), ?, ?, ?, ?)`, data.Receiver, data.Status, data.ExternalURL, data.GroupKey)
 		if err != nil {
 			return fmt.Errorf("failed to insert into AlertGroups: %s", err)
 		}

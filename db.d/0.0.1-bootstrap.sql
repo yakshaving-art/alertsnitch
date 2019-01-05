@@ -34,6 +34,7 @@ CREATE TABLE `AlertGroup` (
 	`receiver` VARCHAR(100) NOT NULL,
 	`status` VARCHAR(50) NOT NULL,
 	`externalURL` TEXT NOT NULL,
+	`groupKey` VARCHAR(255) NOT NULL,
 	KEY `idx_timestamp` (`timestamp`) USING BTREE,
     KEY `idx_status_ts` (`status`, `timestamp`) USING BTREE,
 	PRIMARY KEY (`ID`)
