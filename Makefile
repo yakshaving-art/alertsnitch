@@ -42,7 +42,12 @@ lint:	### run all the lints
 .PHONY: test
 test:	### run all the tests
 # test: lint
-	go test -v -coverprofile=coverage.out $$(go list ./... | grep -v '/vendor/') \
+	@go test -v -coverprofile=coverage.out $$(go list ./... | grep -v '/vendor/') \
+		&& go tool cover -func=coverage.out
+
+.PHONY: integration
+integration:
+	@go test -v ./... -tags "integration" -coverprofile=coverage.out $$(go list ./... | grep -v '/vendor/') \
 		&& go tool cover -func=coverage.out
 
 .PHONY: build
