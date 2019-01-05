@@ -33,7 +33,7 @@ func ConnectMySQL(dsn string) (*MySQLDB, error) {
 		db: connection,
 	}
 
-	return database, database.Ping()
+	return database, database.CheckModel()
 }
 
 // Save implements Storer interface

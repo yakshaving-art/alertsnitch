@@ -24,7 +24,7 @@ type Args struct {
 
 func main() {
 	args := Args{
-		DSN: os.Getenv("ALERTSNITCHER_MYSQL_DSN"),
+		DSN: os.Getenv("ALERTSNITCH_MYSQL_DSN"),
 	}
 
 	flag.BoolVar(&args.Version, "version", false, "print the version and exit")
