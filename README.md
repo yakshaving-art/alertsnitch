@@ -14,10 +14,14 @@ triggered alerts is extremely valuable.
 
 ```mermaid
 graph TD
-    A[alertmanager] -->|POST|B[AlertSnitch]
+    A[alertmanager] -->|POST|B(AlertSnitch)
     B --> |Save|C(MySQL Database)
-    G[Grafana] -.-|Graph|C
-    D[MySQL Client] -.-|Query|C
+    C -.-|Graph|G[Grafana]
+    C -.-|Query|D[MySQL Client]
+    style B fill:#f9f,stroke:#333,stroke-width:1px
+    style C fill:#00A0A0,stroke:#333,stroke-width:1px
+    style D fill:#00C000
+    style G fill:#00C000
 ```
 
 ## How to run
