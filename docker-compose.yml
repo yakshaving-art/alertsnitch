@@ -9,5 +9,5 @@ services:
     ports:
     - "3306:3306"
     environment:
-      MYSQL_DATABASE: alertsnitcher
+      MYSQL_DATABASE: alertsnitch
       MYSQL_ROOT_PASSWORD: "password"
