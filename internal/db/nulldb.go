@@ -7,8 +7,7 @@ import (
 )
 
 // NullDB A database that does nothing
-type NullDB struct {
-}
+type NullDB struct{}
 
 // Save implements Storer interface
 func (NullDB) Save(data *internal.AlertGroup) error {

@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
+	"gitlab.com/yakshaving.art/alertsnitch/internal"
 	"gitlab.com/yakshaving.art/alertsnitch/internal/db"
 	"gitlab.com/yakshaving.art/alertsnitch/internal/server"
 	"gitlab.com/yakshaving.art/alertsnitch/version"
@@ -14,9 +15,11 @@ import (
 
 // Args are the arguments that can be passed to alertsnitch
 type Args struct {
-	Version bool
 	Address string
 	DSN     string
+
+	DryRun  bool
+	Version bool
 }
 
 func main() {
@@ -26,6 +29,7 @@ func main() {
 
 	flag.BoolVar(&args.Version, "version", false, "print the version and exit")
 	flag.StringVar(&args.Address, "listen.address", ":8080", "address in which to listen for http requests")
+	flag.BoolVar(&args.DryRun, "dryrun", false, "uses a null db driver that writes received webhooks to stdout")
 
 	flag.Parse()
 
@@ -34,10 +38,17 @@ func main() {
 		os.Exit(0)
 	}
 
-	driver, err := db.ConnectMySQL(args.DSN)
-	if err != nil {
-		fmt.Println("failed to connect to MySQL database: ", err)
-		os.Exit(1)
+	var driver internal.Storer
+	if args.DryRun {
+		driver = db.NullDB{}
+
+	} else {
+		d, err := db.ConnectMySQL(args.DSN)
+		if err != nil {
+			fmt.Println("failed to connect to MySQL database: ", err)
+			os.Exit(1)
+		}
+		driver = d
 	}
 
 	s := server.New(driver)
