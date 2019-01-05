@@ -2,6 +2,24 @@
 
 Captures Prometheus alertmanager alerts and writes them in a MySQL instance
 
+## How does it work
+
+Given a noisy enough alerting environment, offline querying capabilities of
+triggered alerts is extremely valuable.
+
+1. You stand up one of these
+1. You configure the alertmanager to point at it
+1. Every alert that gets triggered reaches your MySQL database
+1. Profit
+
+```mermaid
+graph TD
+    A[alertmanager] -->|POST|B[AlertSnitch]
+    B --> |Save|C(MySQL Database)
+    G[Grafana] -.-|Graph|C
+    D[MySQL Client] -.-|Query|C
+```
+
 ## How to run
 
 Run using docker in this very registry, for ex.
