@@ -28,6 +28,7 @@ test:
   script:
   - apk --no-cache add mysql-client
   - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql \
+    --default-authentication-plugin=mysql_native_password \
     "${MYSQL_DATABASE}" < db.d/0.0.1-bootstrap.sql
   - dep ensure
   - make integration
