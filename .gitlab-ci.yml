@@ -28,6 +28,8 @@ test:
   script:
   - apk --no-cache add mysql-client
   - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql \
+    < echo "CREATE DATABASE ${MYSQL_DATABASE};"
+  - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql \
     "${MYSQL_DATABASE}" < db.d/0.0.1-bootstrap.sql
   - dep ensure
   - make integration
