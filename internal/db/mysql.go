@@ -77,13 +77,35 @@ func (d MySQLDB) Save(data *template.Data) error {
 		}
 
 		for _, alert := range data.Alerts {
-			_, err := d.db.Exec(`
+			result, err := d.db.Exec(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, endsAt, generatorURL)
-				VALUES (?, ?, ?, ?, ?)`, alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL)
+				VALUES (?, ?, ?, ?, ?)`,
+				alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL)
 			if err != nil {
 				return fmt.Errorf("failed to insert into Alert: %s", err)
 			}
 
+			alertID, err := result.LastInsertId()
+			if err != nil {
+				return fmt.Errorf("failed to get Alert inserted id: %s", err)
+			}
+
+			for k, v := range alert.Labels {
+				_, err := d.db.Exec(`
+					INSERT INTO AlertLabel (AlertID, Label, Value)
+					VALUES (?, ?, ?)`, alertID, k, v)
+				if err != nil {
+					return fmt.Errorf("failed to insert into AlertLabel: %s", err)
+				}
+			}
+			for k, v := range alert.Annotations {
+				_, err := d.db.Exec(`
+					INSERT INTO AlertAnnotation (AlertID, Annotation, Value)
+					VALUES (?, ?, ?)`, alertID, k, v)
+				if err != nil {
+					return fmt.Errorf("failed to insert into AlertAnnotation: %s", err)
+				}
+			}
 		}
 
 		return nil
