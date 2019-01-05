@@ -30,7 +30,7 @@ DROP PROCEDURE bootstrap;
 -- Create the rest of the tables
 CREATE TABLE `AlertGroup` (
 	`ID` INT NOT NULL AUTO_INCREMENT,
-	`timestamp` TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+	`timestamp` TIMESTAMP NOT NULL,
 	`receiver` VARCHAR(100) NOT NULL,
 	`status` VARCHAR(50) NOT NULL,
 	`groupKey` VARCHAR(255) NOT NULL,
