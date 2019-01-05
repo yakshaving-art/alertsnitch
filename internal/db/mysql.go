@@ -7,8 +7,11 @@ import (
 
 	"database/sql"
 
-	"github.com/prometheus/alertmanager/template"
+	"gitlab.com/yakshaving.art/alertsnitch/internal"
 )
+
+// SupportedModel stores the model that is supported by this application
+const SupportedModel = "0.0.1"
 
 // MySQLDB A database that does nothing
 type MySQLDB struct {
@@ -20,22 +23,25 @@ func ConnectMySQL(dsn string) (*MySQLDB, error) {
 	if dsn == "" {
 		return nil, fmt.Errorf("Empty DSN provided, can't connect to database")
 	}
-	database, err := sql.Open("mysql", dsn)
+
+	connection, err := sql.Open("mysql", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to MySQL database: %s", err)
+		return nil, fmt.Errorf("failed to open MySQL connection: %s", err)
 	}
 
-	return &MySQLDB{
-		db: database,
-	}, nil
+	database := &MySQLDB{
+		db: connection,
+	}
+
+	return database, database.Ping()
 }
 
 // Save implements Storer interface
-func (d MySQLDB) Save(data *template.Data) error {
+func (d MySQLDB) Save(data *internal.AlertGroup) error {
 	return d.unitOfWork(func() error {
 		r, err := d.db.Exec(`
-			INSERT INTO AlertGroup (timestamp, receiver, status, externalURL)
-			VALUES (now(), ?, ?, ?)`, data.Receiver, data.Status, data.ExternalURL)
+			INSERT INTO AlertGroup (timestamp, receiver, status, externalURL, groupKey)
+			VALUES (now(), ?, ?, ?, ?)`, data.Receiver, data.Status, data.ExternalURL, data.GroupKey)
 		if err != nil {
 			return fmt.Errorf("failed to insert into AlertGroups: %s", err)
 		}
@@ -71,13 +77,35 @@ func (d MySQLDB) Save(data *template.Data) error {
 		}
 
 		for _, alert := range data.Alerts {
-			_, err := d.db.Exec(`
+			result, err := d.db.Exec(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, endsAt, generatorURL)
-				VALUES (?, ?, ?, ?, ?)`, alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL)
+				VALUES (?, ?, ?, ?, ?)`,
+				alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL)
 			if err != nil {
 				return fmt.Errorf("failed to insert into Alert: %s", err)
 			}
 
+			alertID, err := result.LastInsertId()
+			if err != nil {
+				return fmt.Errorf("failed to get Alert inserted id: %s", err)
+			}
+
+			for k, v := range alert.Labels {
+				_, err := d.db.Exec(`
+					INSERT INTO AlertLabel (AlertID, Label, Value)
+					VALUES (?, ?, ?)`, alertID, k, v)
+				if err != nil {
+					return fmt.Errorf("failed to insert into AlertLabel: %s", err)
+				}
+			}
+			for k, v := range alert.Annotations {
+				_, err := d.db.Exec(`
+					INSERT INTO AlertAnnotation (AlertID, Annotation, Value)
+					VALUES (?, ?, ?)`, alertID, k, v)
+				if err != nil {
+					return fmt.Errorf("failed to insert into AlertAnnotation: %s", err)
+				}
+			}
 		}
 
 		return nil
@@ -112,6 +140,30 @@ func (d MySQLDB) Ping() error {
 	defer cancel()
 
 	return d.db.PingContext(ctx)
+}
+
+// CheckModel implements Storer interface
+func (d MySQLDB) CheckModel() error {
+	rows, err := d.db.Query("SELECT version FROM Model")
+	if err != nil {
+		return fmt.Errorf("failed to fetch model version from the database: %s", err)
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return fmt.Errorf("failed to read model version from the database: empty resultset")
+	}
+
+	var model string
+	if err := rows.Scan(&model); err != nil {
+		return fmt.Errorf("failed to read model version from the database: %s", err)
+	}
+
+	if model != SupportedModel {
+		return fmt.Errorf("model '%s' is not supported by this application (%s)", model, SupportedModel)
+	}
+
+	return nil
 }
 
 func (MySQLDB) String() string {

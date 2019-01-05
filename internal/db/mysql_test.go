@@ -18,8 +18,9 @@ func TestPingingDatabaseWorks(t *testing.T) {
 	a := assert.New(t)
 	driver, err := db.ConnectMySQL(os.Getenv("ALERTSNITCHER_MYSQL_DSN"))
 	a.NoError(err)
-	a.NotNil(driver)
-	a.NoError(driver.Ping())
+	a.NotNilf(driver, "database driver is nil?")
+	a.NoErrorf(driver.Ping(), "failed to ping database")
+	a.NoErrorf(driver.CheckModel(), "failed to check the model")
 }
 
 func TestSavingAnAlertWorks(t *testing.T) {

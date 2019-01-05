@@ -14,6 +14,10 @@ import (
 	"gitlab.com/yakshaving.art/alertsnitch/internal/webhook"
 )
 
+// SupportedWebhookVersion is the alert webhook data version that is supported
+// by this app
+const SupportedWebhookVersion = "4"
+
 // Server represents a web server that processes webhooks
 type Server struct {
 	db internal.Storer
@@ -63,6 +67,13 @@ func (s Server) webhookPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if data.Version != SupportedWebhookVersion {
+		metrics.InvalidWebhooksTotal.Inc()
+
+		http.Error(w, fmt.Sprintf("Invalid payload: webhook version %s is not supported", data.Version), http.StatusBadRequest)
+		return
+	}
+
 	metrics.AlertsReceivedTotal.WithLabelValues(data.Receiver, data.Status).Add(float64(len(data.Alerts)))
 
 	if err = s.db.Save(data); err != nil {
@@ -82,5 +93,8 @@ func (s Server) healthyProbe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s Server) readyProbe(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "Not Implemented", http.StatusNotImplemented)
+	if err := s.db.CheckModel(); err != nil {
+		http.Error(w, fmt.Sprintf("invalid model: %s", err), http.StatusServiceUnavailable)
+		return
+	}
 }

@@ -13,5 +13,6 @@ func TestNullDBObject(t *testing.T) {
 	a.Equal(n.String(), "null database driver")
 
 	a.Nil(n.Save(nil))
-	a.Nil(n.Ping())
+	a.NoError(n.Ping())
+	a.NoError(n.CheckModel())
 }
