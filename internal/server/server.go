@@ -93,6 +93,10 @@ func (s Server) healthyProbe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s Server) readyProbe(w http.ResponseWriter, r *http.Request) {
+	if err := s.db.Ping(); err != nil {
+		http.Error(w, fmt.Sprintf("database is not reachable: %s", err), http.StatusServiceUnavailable)
+		return
+	}
 	if err := s.db.CheckModel(); err != nil {
 		http.Error(w, fmt.Sprintf("invalid model: %s", err), http.StatusServiceUnavailable)
 		return

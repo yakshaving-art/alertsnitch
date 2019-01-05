@@ -8,6 +8,7 @@ import (
 	"database/sql"
 
 	"gitlab.com/yakshaving.art/alertsnitch/internal"
+	"gitlab.com/yakshaving.art/alertsnitch/internal/metrics"
 )
 
 // SupportedModel stores the model that is supported by this application
@@ -139,7 +140,12 @@ func (d MySQLDB) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	return d.db.PingContext(ctx)
+	if err := d.db.PingContext(ctx); err != nil {
+		metrics.DatabaseUp.Set(0)
+		return err
+	}
+	metrics.DatabaseUp.Set(1)
+	return nil
 }
 
 // CheckModel implements Storer interface
