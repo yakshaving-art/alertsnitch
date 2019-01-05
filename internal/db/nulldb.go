@@ -12,13 +12,19 @@ type NullDB struct {
 
 // Save implements Storer interface
 func (NullDB) Save(data *template.Data) error {
-	log.Printf("save alert %#v", data)
+	log.Printf("save alert %#v\n", data)
 	return nil
 }
 
 // Ping implements Storer interface
 func (NullDB) Ping() error {
-	log.Printf("pong")
+	log.Println("pong")
+	return nil
+}
+
+// CheckModel implements Storer interface
+func (NullDB) CheckModel() error {
+	log.Println("check model")
 	return nil
 }
 

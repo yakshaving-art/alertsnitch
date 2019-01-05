@@ -8,4 +8,5 @@ import (
 type Storer interface {
 	Save(*template.Data) error
 	Ping() error
+	CheckModel() error
 }

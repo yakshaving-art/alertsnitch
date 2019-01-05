@@ -10,6 +10,9 @@ import (
 	"github.com/prometheus/alertmanager/template"
 )
 
+// SupportedModel stores the model that is supported by this application
+const SupportedModel = "0.0.1"
+
 // MySQLDB A database that does nothing
 type MySQLDB struct {
 	db *sql.DB
@@ -20,14 +23,17 @@ func ConnectMySQL(dsn string) (*MySQLDB, error) {
 	if dsn == "" {
 		return nil, fmt.Errorf("Empty DSN provided, can't connect to database")
 	}
-	database, err := sql.Open("mysql", dsn)
+
+	connection, err := sql.Open("mysql", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to MySQL database: %s", err)
+		return nil, fmt.Errorf("failed to open MySQL connection: %s", err)
 	}
 
-	return &MySQLDB{
-		db: database,
-	}, nil
+	database := &MySQLDB{
+		db: connection,
+	}
+
+	return database, database.Ping()
 }
 
 // Save implements Storer interface
@@ -112,6 +118,30 @@ func (d MySQLDB) Ping() error {
 	defer cancel()
 
 	return d.db.PingContext(ctx)
+}
+
+// CheckModel implements Storer interface
+func (d MySQLDB) CheckModel() error {
+	rows, err := d.db.Query("SELECT version FROM Model")
+	if err != nil {
+		return fmt.Errorf("failed to fetch model version from the database: %s", err)
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return fmt.Errorf("failed to read model version from the database: empty resultset")
+	}
+
+	var model string
+	if err := rows.Scan(&model); err != nil {
+		return fmt.Errorf("failed to read model version from the database: %s", err)
+	}
+
+	if model != SupportedModel {
+		return fmt.Errorf("model '%s' is not supported by this application (%s)", model, SupportedModel)
+	}
+
+	return nil
 }
 
 func (MySQLDB) String() string {

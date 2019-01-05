@@ -82,5 +82,8 @@ func (s Server) healthyProbe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s Server) readyProbe(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "Not Implemented", http.StatusNotImplemented)
+	if err := s.db.CheckModel(); err != nil {
+		http.Error(w, fmt.Sprintf("invalid model: %s", err), http.StatusServiceUnavailable)
+		return
+	}
 }
