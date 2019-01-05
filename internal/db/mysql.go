@@ -70,6 +70,16 @@ func (d MySQLDB) Save(data *template.Data) error {
 			}
 		}
 
+		for _, alert := range data.Alerts {
+			_, err := d.db.Exec(`
+				INSERT INTO Alert (alertGroupID, status, startsAt, endsAt, generatorURL)
+				VALUES (?, ?, ?, ?, ?)`, alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL)
+			if err != nil {
+				return fmt.Errorf("failed to insert into Alert: %s", err)
+			}
+
+		}
+
 		return nil
 	})
 }
