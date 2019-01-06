@@ -30,13 +30,13 @@ DROP PROCEDURE bootstrap;
 -- Create the rest of the tables
 CREATE TABLE `AlertGroup` (
 	`ID` INT NOT NULL AUTO_INCREMENT,
-	`timestamp` TIMESTAMP NOT NULL,
+	`time` TIMESTAMP NOT NULL,
 	`receiver` VARCHAR(100) NOT NULL,
 	`status` VARCHAR(50) NOT NULL,
 	`externalURL` TEXT NOT NULL,
 	`groupKey` VARCHAR(255) NOT NULL,
-	KEY `idx_timestamp` (`timestamp`) USING BTREE,
-    KEY `idx_status_ts` (`status`, `timestamp`) USING BTREE,
+	KEY `idx_time` (`time`) USING BTREE,
+    KEY `idx_status_ts` (`status`, `time`) USING BTREE,
 	PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
