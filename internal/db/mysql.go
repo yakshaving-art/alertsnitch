@@ -34,6 +34,11 @@ func ConnectMySQL(dsn string) (*MySQLDB, error) {
 		db: connection,
 	}
 
+	err = database.Ping()
+	if err != nil {
+		return nil, err
+	}
+
 	return database, database.CheckModel()
 }
 
@@ -41,7 +46,7 @@ func ConnectMySQL(dsn string) (*MySQLDB, error) {
 func (d MySQLDB) Save(data *internal.AlertGroup) error {
 	return d.unitOfWork(func() error {
 		r, err := d.db.Exec(`
-			INSERT INTO AlertGroup (timestamp, receiver, status, externalURL, groupKey)
+			INSERT INTO AlertGroup (time, receiver, status, externalURL, groupKey)
 			VALUES (now(), ?, ?, ?, ?)`, data.Receiver, data.Status, data.ExternalURL, data.GroupKey)
 		if err != nil {
 			return fmt.Errorf("failed to insert into AlertGroups: %s", err)
