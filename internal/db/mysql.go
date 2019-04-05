@@ -88,7 +88,7 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 				result, err = d.db.Exec(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, generatorURL)
 				VALUES (?, ?, ?, ?)`,
-					alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL)
+					alertGroupID, alert.Status, alert.StartsAt, alert.GeneratorURL)
 			} else {
 				result, err = d.db.Exec(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, endsAt, generatorURL)
