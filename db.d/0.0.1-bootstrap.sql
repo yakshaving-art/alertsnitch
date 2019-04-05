@@ -72,7 +72,7 @@ CREATE TABLE `Alert` (
     `alertGroupID` INT NOT NULL,
 	`status` VARCHAR(50) NOT NULL,
     `startsAt` DATETIME NOT NULL,
-    `endsAt` DATETIME NOT NULL,
+    `endsAt` DATETIME DEFAULT NULL,
 	`generatorURL` TEXT NOT NULL,
     FOREIGN KEY (alertGroupID) REFERENCES AlertGroup (ID) ON DELETE CASCADE,
 	PRIMARY KEY (`ID`)
