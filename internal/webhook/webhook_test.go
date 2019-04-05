@@ -32,3 +32,19 @@ func TestParsingValidPayloadWorks(t *testing.T) {
 	a.Equal(d.Status, "resolved")
 	a.Equal(d.ExternalURL, "http://alertmanager:9093")
 }
+
+func TestParsingValidPayloadWithoutEndsAtWorks(t *testing.T) {
+	a := assert.New(t)
+	b, err := ioutil.ReadFile("sample-payload-invalid-ends-at.json")
+
+	a.NoError(err)
+
+	d, err := webhook.Parse(b)
+
+	a.NoError(err)
+	a.NotNil(d)
+
+	a.Equal(d.Status, "resolved")
+	a.Equal(d.ExternalURL, "http://alertmanager:9093")
+	a.True(d.Alerts[0].EndsAt.Before(d.Alerts[0].StartsAt))
+}
