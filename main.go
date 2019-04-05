@@ -18,6 +18,7 @@ type Args struct {
 	Address string
 	DSN     string
 
+	Debug   bool
 	DryRun  bool
 	Version bool
 }
@@ -30,6 +31,7 @@ func main() {
 	flag.BoolVar(&args.Version, "version", false, "print the version and exit")
 	flag.StringVar(&args.Address, "listen.address", ":8080", "address in which to listen for http requests")
 	flag.BoolVar(&args.DryRun, "dryrun", false, "uses a null db driver that writes received webhooks to stdout")
+	flag.BoolVar(&args.Debug, "debug", false, "enable debug mode, which dumps alerts payloads to the log as they arrive")
 
 	flag.Parse()
 
@@ -51,6 +53,6 @@ func main() {
 		driver = d
 	}
 
-	s := server.New(driver)
+	s := server.New(driver, args.Debug)
 	s.Start(args.Address)
 }

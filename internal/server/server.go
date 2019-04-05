@@ -22,15 +22,19 @@ const SupportedWebhookVersion = "4"
 type Server struct {
 	db internal.Storer
 	r  *mux.Router
+
+	debug bool
 }
 
 // New returns a new web server
-func New(db internal.Storer) Server {
+func New(db internal.Storer, debug bool) Server {
 	r := mux.NewRouter()
 
 	s := Server{
 		db: db,
 		r:  r,
+
+		debug: debug,
 	}
 
 	r.HandleFunc("/webhook", s.webhookPost).Methods("POST")
@@ -58,6 +62,10 @@ func (s Server) webhookPost(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed to read payload: %s\n", err)
 		http.Error(w, fmt.Sprintf("Failed to read payload: %s", err), http.StatusBadRequest)
 		return
+	}
+
+	if s.debug {
+		log.Println("Received webhook payload", string(body))
 	}
 
 	data, err := webhook.Parse(body)
