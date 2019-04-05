@@ -55,6 +55,7 @@ func (s Server) webhookPost(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		metrics.InvalidWebhooksTotal.Inc()
+		log.Printf("Failed to read payload: %s\n", err)
 		http.Error(w, fmt.Sprintf("Failed to read payload: %s", err), http.StatusBadRequest)
 		return
 	}
@@ -63,6 +64,7 @@ func (s Server) webhookPost(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		metrics.InvalidWebhooksTotal.Inc()
 
+		log.Printf("Invalid payload: %s\n", err)
 		http.Error(w, fmt.Sprintf("Invalid payload: %s", err), http.StatusBadRequest)
 		return
 	}
@@ -70,6 +72,7 @@ func (s Server) webhookPost(w http.ResponseWriter, r *http.Request) {
 	if data.Version != SupportedWebhookVersion {
 		metrics.InvalidWebhooksTotal.Inc()
 
+		log.Printf("Invalid payload: webhook version %s is not supported\n", data.Version)
 		http.Error(w, fmt.Sprintf("Invalid payload: webhook version %s is not supported", data.Version), http.StatusBadRequest)
 		return
 	}
@@ -79,6 +82,7 @@ func (s Server) webhookPost(w http.ResponseWriter, r *http.Request) {
 	if err = s.db.Save(data); err != nil {
 		metrics.AlertsSavingFailuresTotal.WithLabelValues(data.Receiver, data.Status).Add(float64(len(data.Alerts)))
 
+		log.Printf("failed to save alerts: %s\n", err)
 		http.Error(w, fmt.Sprintf("failed to save alerts: %s", err), http.StatusInternalServerError)
 		return
 	}
@@ -87,6 +91,7 @@ func (s Server) webhookPost(w http.ResponseWriter, r *http.Request) {
 
 func (s Server) healthyProbe(w http.ResponseWriter, r *http.Request) {
 	if err := s.db.Ping(); err != nil {
+		log.Printf("failed to ping database server: %s", err)
 		http.Error(w, fmt.Sprintf("failed to ping database server: %s", err), http.StatusServiceUnavailable)
 		return
 	}
@@ -94,10 +99,12 @@ func (s Server) healthyProbe(w http.ResponseWriter, r *http.Request) {
 
 func (s Server) readyProbe(w http.ResponseWriter, r *http.Request) {
 	if err := s.db.Ping(); err != nil {
+		log.Printf("database is not reachable: %s", err)
 		http.Error(w, fmt.Sprintf("database is not reachable: %s", err), http.StatusServiceUnavailable)
 		return
 	}
 	if err := s.db.CheckModel(); err != nil {
+		log.Printf("invalid model: %s", err)
 		http.Error(w, fmt.Sprintf("invalid model: %s", err), http.StatusServiceUnavailable)
 		return
 	}
