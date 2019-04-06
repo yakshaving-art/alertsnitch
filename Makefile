@@ -57,4 +57,29 @@ build:
 		gitlab.com/yakshaving.art/alertsnitch/version.Commit=$(COMMIT_ID) -X \
 		gitlab.com/yakshaving.art/alertsnitch/version.Date=$(COMMIT_DATE)" 
 
+CURRENT_DIR:=$(shell pwd)
 
+.PHONY: bootstrap_local_testing
+bootstrap_local_testing:
+	@if [[ -z "$(MYSQL_ROOT_PASSWORD)" ]]; then echo "MYSQL_ROOT_PASSWORD is not set" ; exit 1; fi
+	@if [[ -z "$(MYSQL_DATABASE)" ]]; then echo "MYSQL_DATABASE is not set" ; exit 1; fi
+	@echo "Launching alertsnitch-mysql integration container"
+	@docker run --rm --name alertsnitch-mysql \
+		-e MYSQL_ROOT_PASSWORD=$(MYSQL_ROOT_PASSWORD) \
+		-e MYSQL_DATABASE=$(MYSQL_DATABASE) \
+		-p 3306:3306 \
+		-v $(CURRENT_DIR)/db.d:/db.scripts \
+		-d \
+		mysql:5.7
+	@while ! docker exec alertsnitch-mysql mysql --database=$(MYSQL_DATABASE) --password=$(MYSQL_ROOT_PASSWORD) -e "SELECT 1" >/dev/null 2>&1 ; do \
+    echo "Waiting for database connection..." ; \
+    sleep 1 ; \
+	done
+	@echo "Bootstrapping model"
+	@docker exec alertsnitch-mysql sh -c "exec mysql -uroot -p$(MYSQL_ROOT_PASSWORD) $(MYSQL_DATABASE) < /db.scripts/0.0.1-bootstrap.sql"
+	@echo "Everything is ready to run 'make integration'; remember to teardown_local_testing when you are done"
+
+
+.PHONY: teardown_local_testing
+teardown_local_testing:
+	docker stop alertsnitch-mysql

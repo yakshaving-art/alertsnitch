@@ -44,8 +44,8 @@ func ConnectMySQL(dsn string) (*MySQLDB, error) {
 
 // Save implements Storer interface
 func (d MySQLDB) Save(data *internal.AlertGroup) error {
-	return d.unitOfWork(func() error {
-		r, err := d.db.Exec(`
+	return d.unitOfWork(func(tx *sql.Tx) error {
+		r, err := tx.Exec(`
 			INSERT INTO AlertGroup (time, receiver, status, externalURL, groupKey)
 			VALUES (now(), ?, ?, ?, ?)`, data.Receiver, data.Status, data.ExternalURL, data.GroupKey)
 		if err != nil {
@@ -58,7 +58,7 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 		}
 
 		for k, v := range data.GroupLabels {
-			_, err := d.db.Exec(`
+			_, err := tx.Exec(`
 				INSERT INTO GroupLabel (alertGroupID, GroupLabel, Value)
 				VALUES (?, ?, ?)`, alertGroupID, k, v)
 			if err != nil {
@@ -66,7 +66,7 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 			}
 		}
 		for k, v := range data.CommonLabels {
-			_, err := d.db.Exec(`
+			_, err := tx.Exec(`
 				INSERT INTO CommonLabel (alertGroupID, Label, Value)
 				VALUES (?, ?, ?)`, alertGroupID, k, v)
 			if err != nil {
@@ -74,7 +74,7 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 			}
 		}
 		for k, v := range data.CommonAnnotations {
-			_, err := d.db.Exec(`
+			_, err := tx.Exec(`
 				INSERT INTO CommonAnnotation (alertGroupID, Annotation, Value)
 				VALUES (?, ?, ?)`, alertGroupID, k, v)
 			if err != nil {
@@ -85,12 +85,12 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 		for _, alert := range data.Alerts {
 			var result sql.Result
 			if alert.EndsAt.Before(alert.StartsAt) {
-				result, err = d.db.Exec(`
+				result, err = tx.Exec(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, generatorURL)
 				VALUES (?, ?, ?, ?)`,
 					alertGroupID, alert.Status, alert.StartsAt, alert.GeneratorURL)
 			} else {
-				result, err = d.db.Exec(`
+				result, err = tx.Exec(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, endsAt, generatorURL)
 				VALUES (?, ?, ?, ?, ?)`,
 					alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL)
@@ -105,7 +105,7 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 			}
 
 			for k, v := range alert.Labels {
-				_, err := d.db.Exec(`
+				_, err := tx.Exec(`
 					INSERT INTO AlertLabel (AlertID, Label, Value)
 					VALUES (?, ?, ?)`, alertID, k, v)
 				if err != nil {
@@ -113,7 +113,7 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 				}
 			}
 			for k, v := range alert.Annotations {
-				_, err := d.db.Exec(`
+				_, err := tx.Exec(`
 					INSERT INTO AlertAnnotation (AlertID, Annotation, Value)
 					VALUES (?, ?, ?)`, alertID, k, v)
 				if err != nil {
@@ -126,13 +126,13 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 	})
 }
 
-func (d MySQLDB) unitOfWork(f func() error) error {
+func (d MySQLDB) unitOfWork(f func(*sql.Tx) error) error {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %s", err)
 	}
 
-	err = f()
+	err = f(tx)
 
 	if err != nil {
 		e := tx.Rollback()
