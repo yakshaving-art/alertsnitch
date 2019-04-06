@@ -45,6 +45,7 @@ expected one.
 
 ### Arguments
 
+* **-debug** dumps the received webhook payloads to the log so you can understand what is going on
 * **-dryrun** uses a null db driver that writes received webhooks to stdout
 * **-listen.address** _string_ address in which to listen for http requests (default ":8080")
 * **-version** prints the version and exit
@@ -84,7 +85,7 @@ receivers:
 And add the route
 
 ```yaml
-# We want to send all alerts to alertsnitch and then continue to the 
+# We want to send all alerts to alertsnitch and then continue to the
 # appropiate handler.
 route:
   routes:
@@ -127,5 +128,17 @@ by the alert manager.
 AlertSnitch writes alerts in such a way thay they can be explored using
 Grafana's MySQL Data Source plugin. Refer to Grafana documentation for
 further instructions.
+
+## Testing locally
+
+We provide a couple of Makefile tasks to make it easy to run integration tests
+locally, to get a full coverage sample run:
+
+```sh
+make bootstrap_local_testing
+make integration
+go tool cover -html=coverage.out
+make teardown_local_testing
+```
 
 [1]: https://github.com/go-sql-driver/mysql
