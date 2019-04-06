@@ -81,6 +81,17 @@ receivers:
     - url: http://<alertsnitch-ip>:8080/webhook
 ```
 
+And add the route
+
+```yaml
+# We want to send all alerts to alertsnitch and then continue to the 
+# appropiate handler.
+route:
+  routes:
+  - receiver: alertsnitch
+    continue: true
+```
+
 ## Readiness probe
 
 AlertSnitch offers a `/-/ready` endpoint which will return 200 if the
