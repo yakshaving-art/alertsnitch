@@ -1,4 +1,4 @@
-image: registry.gitlab.com/yakshaving.art/go-builder:0.0.1
+image: registry.gitlab.com/yakshaving.art/dockerfiles/go-builder:0.0.1
 stages:
   - test
   - build
@@ -14,12 +14,6 @@ cache:
   paths:
   - vendor
 
-before_script:
-  - mkdir -p /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
-  - cd /go/src/gitlab.com/${CI_PROJECT_NAMESPACE}
-  - ln -s ${CI_PROJECT_DIR}
-  - cd /go/src/gitlab.com/${CI_PROJECT_PATH}
-
 test:
   stage: test
   services:
@@ -29,7 +23,7 @@ test:
   - apk --no-cache add mysql-client
   - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
   - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}" < db.d/0.0.1-bootstrap.sql
-  - dep ensure
+  - go mod vendor
   - make integration
 
 build:
