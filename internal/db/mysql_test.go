@@ -38,3 +38,18 @@ func TestSavingAnAlertWorks(t *testing.T) {
 
 	a.NoError(driver.Save(data))
 }
+
+func TestSavingAFiringAlertWorks(t *testing.T) {
+	a := assert.New(t)
+
+	b, err := ioutil.ReadFile("../webhook/sample-payload-invalid-ends-at.json")
+	a.NoError(err)
+
+	data, err := webhook.Parse(b)
+	a.NoError(err)
+
+	driver, err := db.ConnectMySQL(os.Getenv(internal.MySQLDSNVar))
+	a.NoError(err)
+
+	a.NoError(driver.Save(data))
+}
