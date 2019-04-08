@@ -30,7 +30,7 @@ Run using docker in this very registry, for ex.
 
 ```sh
 $ docker run --rm \
-    -p 8080:8080 \
+    -p 9567:9567 \
     -e ALERTSNITCH_MYSQL_DSN \
     registry.gitlab.com/yakshaving.art/alertsnitch
 ```
@@ -47,7 +47,7 @@ expected one.
 
 * **-debug** dumps the received webhook payloads to the log so you can understand what is going on
 * **-dryrun** uses a null db driver that writes received webhooks to stdout
-* **-listen.address** _string_ address in which to listen for http requests (default ":8080")
+* **-listen.address** _string_ address in which to listen for http requests (default ":9567")
 * **-version** prints the version and exit
 
 ### Sample bootstrapping
@@ -79,7 +79,7 @@ forward every alert to it on the `/webhooks` path.
 receivers:
 - name: alertsnitch
   webhook_configs:
-    - url: http://<alertsnitch-ip>:8080/webhook
+    - url: http://<alertsnitch-ip>:9567/webhook
 ```
 
 And add the route

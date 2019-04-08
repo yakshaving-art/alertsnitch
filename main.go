@@ -29,7 +29,7 @@ func main() {
 	}
 
 	flag.BoolVar(&args.Version, "version", false, "print the version and exit")
-	flag.StringVar(&args.Address, "listen.address", ":8080", "address in which to listen for http requests")
+	flag.StringVar(&args.Address, "listen.address", ":9567", "address in which to listen for http requests")
 	flag.BoolVar(&args.DryRun, "dryrun", false, "uses a null db driver that writes received webhooks to stdout")
 	flag.BoolVar(&args.Debug, "debug", false, "enable debug mode, which dumps alerts payloads to the log as they arrive")
 
