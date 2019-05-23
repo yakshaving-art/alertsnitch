@@ -26,11 +26,11 @@ endif
 # Targets
 #
 .PHONY: debug
-debug:	### Debug Makefile itself
+debug:	### debug Makefile itself
 	@echo $(UNAME)
 
 .PHONY: check
-check:	### Sanity checks
+check:	### sanity checks
 	@find . -type f \( -name \*.yml -o -name \*yaml \) \! -path './vendor/*' \
 		| xargs -r yq '.' # >/dev/null
 
@@ -40,18 +40,18 @@ lint:	### run all the lints
 	gometalinter
 
 .PHONY: test
-test:	### run all the tests
+test:	### run all the unit tests
 # test: lint
 	@go test -v -coverprofile=coverage.out $$(go list ./... | grep -v '/vendor/') \
 		&& go tool cover -func=coverage.out
 
 .PHONY: integration
-integration:
+integration: ### run integration tests (requires a bootstrapped local environment)
 	@go test -v ./... -tags "integration" -coverprofile=coverage.out $$(go list ./... | grep -v '/vendor/') \
 		&& go tool cover -func=coverage.out
 
 .PHONY: build
-build:
+build: ### build the binary applying the correct version from git
 	@go build -ldflags "-X \
 		gitlab.com/yakshaving.art/alertsnitch/version.Version=$(VERSION) -X \
 		gitlab.com/yakshaving.art/alertsnitch/version.Commit=$(COMMIT_ID) -X \
@@ -60,7 +60,7 @@ build:
 CURRENT_DIR:=$(shell pwd)
 
 .PHONY: bootstrap_local_testing
-bootstrap_local_testing:
+bootstrap_local_testing: ### builds and bootstraps a local integration testing environment using docker-compose
 	@if [[ -z "$(MYSQL_ROOT_PASSWORD)" ]]; then echo "MYSQL_ROOT_PASSWORD is not set" ; exit 1; fi
 	@if [[ -z "$(MYSQL_DATABASE)" ]]; then echo "MYSQL_DATABASE is not set" ; exit 1; fi
 	@echo "Launching alertsnitch-mysql integration container"
@@ -81,5 +81,5 @@ bootstrap_local_testing:
 
 
 .PHONY: teardown_local_testing
-teardown_local_testing:
+teardown_local_testing: ### Tears down the integration testing environment
 	docker stop alertsnitch-mysql

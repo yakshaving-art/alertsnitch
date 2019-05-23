@@ -15,8 +15,11 @@ import (
 
 // Args are the arguments that can be passed to alertsnitch
 type Args struct {
-	Address string
-	DSN     string
+	Address                string
+	DSN                    string
+	MaxIdleConns           int
+	MaxOpenConns           int
+	MaxConnLifetimeSeconds int
 
 	Debug   bool
 	DryRun  bool
@@ -33,6 +36,10 @@ func main() {
 	flag.BoolVar(&args.DryRun, "dryrun", false, "uses a null db driver that writes received webhooks to stdout")
 	flag.BoolVar(&args.Debug, "debug", false, "enable debug mode, which dumps alerts payloads to the log as they arrive")
 
+	flag.IntVar(&args.MaxOpenConns, "max-open-connections", 2, "maximum number of connections in the pool")
+	flag.IntVar(&args.MaxIdleConns, "max-idle-connections", 1, "maximum number of idle connections in the pool")
+	flag.IntVar(&args.MaxConnLifetimeSeconds, "max-connection-lifetyme-seconds", 600, "maximum number of seconds a connection is kept alive in the pool")
+
 	flag.Parse()
 
 	if args.Version {
@@ -45,7 +52,12 @@ func main() {
 		driver = db.NullDB{}
 
 	} else {
-		d, err := db.ConnectMySQL(args.DSN)
+		d, err := db.ConnectMySQL(db.ConnectionArgs{
+			DSN:                    args.DSN,
+			MaxIdleConns:           args.MaxIdleConns,
+			MaxOpenConns:           args.MaxOpenConns,
+			MaxConnLifetimeSeconds: args.MaxConnLifetimeSeconds,
+		})
 		if err != nil {
 			fmt.Println("failed to connect to MySQL database: ", err)
 			os.Exit(1)

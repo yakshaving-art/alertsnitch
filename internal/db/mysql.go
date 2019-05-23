@@ -19,16 +19,28 @@ type MySQLDB struct {
 	db *sql.DB
 }
 
+// ConnectionArgs required to create a MySQL connection
+type ConnectionArgs struct {
+	DSN                    string
+	MaxIdleConns           int
+	MaxOpenConns           int
+	MaxConnLifetimeSeconds int
+}
+
 // ConnectMySQL connect to a MySQL database using the provided data source name
-func ConnectMySQL(dsn string) (*MySQLDB, error) {
-	if dsn == "" {
+func ConnectMySQL(args ConnectionArgs) (*MySQLDB, error) {
+	if args.DSN == "" {
 		return nil, fmt.Errorf("Empty DSN provided, can't connect to database")
 	}
 
-	connection, err := sql.Open("mysql", dsn)
+	connection, err := sql.Open("mysql", args.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open MySQL connection: %s", err)
 	}
+
+	connection.SetMaxIdleConns(args.MaxIdleConns)
+	connection.SetMaxOpenConns(args.MaxOpenConns)
+	connection.SetConnMaxLifetime(time.Duration(args.MaxConnLifetimeSeconds) * time.Second)
 
 	database := &MySQLDB{
 		db: connection,
