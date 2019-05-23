@@ -15,9 +15,10 @@ import (
 	"gitlab.com/yakshaving.art/alertsnitch/internal/webhook"
 )
 
+
 func TestPingingDatabaseWorks(t *testing.T) {
 	a := assert.New(t)
-	driver, err := db.ConnectMySQL(os.Getenv(internal.MySQLDSNVar))
+	driver, err := db.ConnectMySQL(connectionArgs())
 	a.NoError(err)
 	a.NotNilf(driver, "database driver is nil?")
 	a.NoErrorf(driver.Ping(), "failed to ping database")
@@ -33,7 +34,7 @@ func TestSavingAnAlertWorks(t *testing.T) {
 	data, err := webhook.Parse(b)
 	a.NoError(err)
 
-	driver, err := db.ConnectMySQL(os.Getenv(internal.MySQLDSNVar))
+	driver, err := db.ConnectMySQL(connectionArgs())
 	a.NoError(err)
 
 	a.NoError(driver.Save(data))
@@ -48,8 +49,17 @@ func TestSavingAFiringAlertWorks(t *testing.T) {
 	data, err := webhook.Parse(b)
 	a.NoError(err)
 
-	driver, err := db.ConnectMySQL(os.Getenv(internal.MySQLDSNVar))
+	driver, err := db.ConnectMySQL(connectionArgs())
 	a.NoError(err)
 
 	a.NoError(driver.Save(data))
+}
+
+func connectionArgs() db.ConnectionArgs {
+	return db.ConnectionArgs{
+		DSN: os.Getenv(internal.MySQLDSNVar),
+		MaxIdleConns:           1,
+		MaxOpenConns:           2,
+		MaxConnLifetimeSeconds: 600,
+	}
 }
