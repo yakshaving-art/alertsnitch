@@ -30,26 +30,53 @@ build:
   stage: build
   artifacts:
     paths:
-    - alertsnitch
+    - alertsnitch-*
   script:
   - make build
+  - GOARCH=arm64 make build
 
-docker_image:
-  stage: release
-  image:
-    name: registry.yakshaving.art:443/tools/kaniko-shell:latest
-  script:
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile.amd64 --destination $CI_REGISTRY_IMAGE:latest
-  only:
-  - master
+# docker_image:
+#   stage: release
+#   image:
+#     name: registry.yakshaving.art:443/tools/kaniko-shell:latest
+#   script:
+#     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+#     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile.amd64 --destination $CI_REGISTRY_IMAGE:latest
+#   only:
+#   - master
 
-release:
+# release:
+#   stage: release
+#   image:
+#     name: registry.yakshaving.art:443/tools/kaniko-shell:latest
+#   script:
+#     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+#     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile.amd64 --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+#   only:
+#   - tags
+
+build_and_push_image:
+  image: docker:stable
+  services:
+  - docker:dind
   stage: release
-  image:
-    name: registry.yakshaving.art:443/tools/kaniko-shell:latest
   script:
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile.amd64 --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
-  only:
-  - tags
+    - docker login -u gitlab-ci-token -p ${CI_JOB_TOKEN} ${CI_REGISTRY}
+
+    - echo Building arm64 image
+    - ln -s Dockerfile.arm64 Dockerfile
+    - docker build --pull -t ${CI_REGISTRY_IMAGE}:arm64-latest .
+    - docker push ${CI_REGISTRY_IMAGE}:arm64-latest
+    - rm Dockerfile
+
+    - echo Building amd64 image
+    - ln -s Dockerfile.amd64 Dockerfile
+    - docker build --pull -t ${CI_REGISTRY_IMAGE}:amd64-latest .
+    - docker push ${CI_REGISTRY_IMAGE}:amd64-latest
+    - rm Dockerfile
+
+    - docker manifest create ${CI_REGISTRY_IMAGE} ${CI_REGISTRY_IMAGE}:amd64-latest ${CI_REGISTRY_IMAGE}:arm64-latest
+    - docker manifest annotate ${CI_REGISTRY_IMAGE} ${CI_REGISTRY_IMAGE}:arm64-latest --os linux --arch arm64
+    - docker manifest push ${CI_REGISTRY_IMAGE}:latest
+#   only:
+#   - master

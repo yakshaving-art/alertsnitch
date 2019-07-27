@@ -2,7 +2,7 @@ FROM multiarch/alpine:3.9
 
 RUN apk --no-cache add ca-certificates
 
-COPY alertsnitch-amd64 /alertsnitch
+COPY alertsnitch-arm64 /alertsnitch
 
 EXPOSE 8080
  

@@ -10,6 +10,9 @@ COMMIT_ID := `git log -1 --format=%H`
 COMMIT_DATE := `git log -1 --format=%aI`
 VERSION := $${CI_COMMIT_TAG:-SNAPSHOT-$(COMMIT_ID)}
 
+GOOS ?= linux
+GOARCH ?= amd64
+
 # this is godly
 # https://news.ycombinator.com/item?id=11939200
 .PHONY: help
@@ -52,10 +55,11 @@ integration: ### run integration tests (requires a bootstrapped local environmen
 
 .PHONY: build
 build: ### build the binary applying the correct version from git
-	@go build -ldflags "-X \
+	@GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags "-X \
 		gitlab.com/yakshaving.art/alertsnitch/version.Version=$(VERSION) -X \
 		gitlab.com/yakshaving.art/alertsnitch/version.Commit=$(COMMIT_ID) -X \
-		gitlab.com/yakshaving.art/alertsnitch/version.Date=$(COMMIT_DATE)" 
+		gitlab.com/yakshaving.art/alertsnitch/version.Date=$(COMMIT_DATE)" \
+		-o alertsnitch-$(GOARCH)
 
 CURRENT_DIR:=$(shell pwd)
 
