@@ -1,4 +1,4 @@
-FROM multiarch/alpine:3.9
+FROM multiarch/alpine:amd64-v3.9
 
 RUN apk --no-cache add ca-certificates
 
