@@ -6,6 +6,7 @@ stages:
   - release
 
 variables:
+  CGO_ENABLED: 0
   MYSQL_DATABASE: alertsnitch
   MYSQL_ROOT_PASSWORD: mysql
   ALERTSNITCH_MYSQL_DSN: "root:${MYSQL_ROOT_PASSWORD}@tcp(mysql)/${MYSQL_DATABASE}"
@@ -31,8 +32,6 @@ build:
   artifacts:
     paths:
     - alertsnitch-*
-  variables:
-    CGO_ENABLED: 0
   script:
   - make build
   - GOARCH=arm64 make build
