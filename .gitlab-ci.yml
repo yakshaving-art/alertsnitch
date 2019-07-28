@@ -1,6 +1,5 @@
 image: registry.gitlab.com/yakshaving.art/dockerfiles/go-builder:0.0.1
 stages:
-  - test
   - build
   - image
   - release
@@ -16,7 +15,7 @@ cache:
   - vendor
 
 test:
-  stage: test
+  stage: build
   services:
   - mysql:5.7
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
