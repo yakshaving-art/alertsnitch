@@ -1,6 +1,4 @@
-FROM multiarch/alpine:amd64-v3.9
-
-RUN apk --no-cache add ca-certificates
+FROM registry.yakshaving.art:443/tools/multiarch-alpine-base:latest
 
 COPY alertsnitch-amd64 /alertsnitch
 
