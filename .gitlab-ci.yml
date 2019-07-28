@@ -77,8 +77,8 @@ release_latest:
     - docker manifest create ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:amd64-latest ${CI_REGISTRY_IMAGE}:arm64-latest
     - docker manifest annotate ${CI_REGISTRY_IMAGE} ${CI_REGISTRY_IMAGE}:arm64-latest --os linux --arch arm64
     - docker manifest push ${CI_REGISTRY_IMAGE}:latest
-  # only:
-  #   - master
+  only:
+    - master
 
 release_tag:
   <<: *docker
