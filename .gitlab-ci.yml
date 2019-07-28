@@ -1,6 +1,5 @@
 image: registry.gitlab.com/yakshaving.art/dockerfiles/go-builder:0.0.1
 stages:
-  - test
   - build
   - image
   - release
@@ -16,7 +15,7 @@ cache:
   - vendor
 
 test:
-  stage: test
+  stage: build
   services:
   - mysql:5.7
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
@@ -35,6 +34,7 @@ build:
   script:
   - make build
   - GOARCH=arm64 make build
+  - GOARCH=arm GOARM=6 make build
 
 .docker: &docker
   image: docker:stable
@@ -70,12 +70,23 @@ build_amd64:
   variables:
     ARCH: amd64
 
+build_armhf:
+  <<: *build_image
+  variables:
+    ARCH: armhf
+
 release_latest:
   <<: *docker
   stage: release
   script:
-    - docker manifest create ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:amd64-latest ${CI_REGISTRY_IMAGE}:arm64-latest
-    - docker manifest annotate ${CI_REGISTRY_IMAGE} ${CI_REGISTRY_IMAGE}:arm64-latest --os linux --arch arm64
+    - docker manifest create ${CI_REGISTRY_IMAGE}:latest
+        ${CI_REGISTRY_IMAGE}:amd64-latest
+        ${CI_REGISTRY_IMAGE}:arm64-latest
+        ${CI_REGISTRY_IMAGE}:armhf-latest
+    - docker manifest annotate ${CI_REGISTRY_IMAGE}
+        ${CI_REGISTRY_IMAGE}:arm64-latest --os linux --arch arm64
+    - docker manifest annotate ${CI_REGISTRY_IMAGE}
+        ${CI_REGISTRY_IMAGE}:armhf-latest --os linux --arch arm --variant 6
     - docker manifest push ${CI_REGISTRY_IMAGE}:latest
   only:
     - master
@@ -84,8 +95,14 @@ release_tag:
   <<: *docker
   stage: release
   script:
-    - docker manifest create ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG} ${CI_REGISTRY_IMAGE}:amd64-latest ${CI_REGISTRY_IMAGE}:arm64-latest
-    - docker manifest annotate ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG} ${CI_REGISTRY_IMAGE}:arm64-latest --os linux --arch arm64
+    - docker manifest create ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}
+        ${CI_REGISTRY_IMAGE}:amd64-latest
+        ${CI_REGISTRY_IMAGE}:arm64-latest
+        ${CI_REGISTRY_IMAGE}:armhf-latest
+    - docker manifest annotate ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}
+        ${CI_REGISTRY_IMAGE}:arm64-latest --os linux --arch arm64
+    - docker manifest annotate ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}
+        ${CI_REGISTRY_IMAGE}:armhf-latest --os linux --arch arm --variant 6
     - docker manifest push ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}
   only:
     - tags
