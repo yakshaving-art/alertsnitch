@@ -24,31 +24,19 @@ graph TD
     style G fill:#00C000
 ```
 
-## How to run
-
-Run using docker in this very registry, for ex.
-
+Simply install to your $GOPATH using your GO tools
 ```sh
-$ docker run --rm \
-    -p 9567:9567 \
-    -e ALERTSNITCH_MYSQL_DSN \
-    registry.gitlab.com/yakshaving.art/alertsnitch
+$ go get gitlab.com/yakshaving.art/alertsnitch`
 ```
+## Requirements
 
-To run it requires a MySQL database to write to.
+To run Alertsnitch requires a MySQL database to write to.
 
 The database must be initialized with alertsnitch bootstrap and must have all
 the available migrations executed.
 
 AlertSnitch will not become online until the model is up to date with the
-expected one.
-
-### Arguments
-
-* **-debug** dumps the received webhook payloads to the log so you can understand what is going on
-* **-dryrun** uses a null db driver that writes received webhooks to stdout
-* **-listen.address** _string_ address in which to listen for http requests (default ":9567")
-* **-version** prints the version and exit
+expected one. For your ease some sample codes are provided hope that helps.
 
 ### Sample bootstrapping
 
@@ -68,6 +56,37 @@ This is a sample of a DSN that would connect to the local host over a unix socke
 ```bash
 export ALERTSNITCH_MYSQL_DSN="alertsnitch:${PASSWORD}@/alertsnitch"
 ```
+
+## How to run
+### Running alertsnitch in Docker
+**Run using docker in this very registry, for ex.**
+
+```sh
+$ docker run --rm \
+    -p 9567:9567 \
+    -e ALERTSNITCH_MYSQL_DSN \
+    registry.gitlab.com/yakshaving.art/alertsnitch
+```
+### To run in ubuntu system, open terminal and run the following
+**First copy the alertsnitch binary from your $GOPATH to /usr/local/bin**
+```sh
+$ sudo cp ~/go/bin/alertsnitch /usr/local/bin
+```
+**Now run alertsnitch as**
+```sh
+$ alertsnitch
+```
+**Or to simply see the alerts received on your terminal run :**
+```sh
+$ alertsnitch --dryrun
+```
+### Arguments
+
+* **-debug** dumps the received webhook payloads to the log so you can understand what is going on
+* **-dryrun** uses a null db driver that writes received webhooks to stdout
+* **-listen.address** _string_ address in which to listen for http requests (default ":9567")
+* **-version** prints the version and exit
+
 
 ## Usage
 
