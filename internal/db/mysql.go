@@ -98,14 +98,14 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 			var result sql.Result
 			if alert.EndsAt.Before(alert.StartsAt) {
 				result, err = tx.Exec(`
-				INSERT INTO Alert (alertGroupID, status, startsAt, generatorURL)
+				INSERT INTO Alert (alertGroupID, status, startsAt, generatorURL,fingerprint)
 				VALUES (?, ?, ?, ?)`,
-					alertGroupID, alert.Status, alert.StartsAt, alert.GeneratorURL)
+					alertGroupID, alert.Status, alert.StartsAt, alert.GeneratorURL, alert.fingerprint)
 			} else {
 				result, err = tx.Exec(`
-				INSERT INTO Alert (alertGroupID, status, startsAt, endsAt, generatorURL)
+				INSERT INTO Alert (alertGroupID, status, startsAt, endsAt, generatorURL,fingerprint)
 				VALUES (?, ?, ?, ?, ?)`,
-					alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL)
+					alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL, alert.fingerprint)
 			}
 			if err != nil {
 				return fmt.Errorf("failed to insert into Alert: %s", err)
