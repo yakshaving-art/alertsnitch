@@ -17,7 +17,8 @@
             },
             "startsAt": "2019-01-02T10:31:46.05445419Z",
             "endsAt": "2019-01-02T10:36:46.05445419Z",
-            "generatorURL": "http://prometheus.int/graph?g0.expr=up%7Bjob%3D%22node-exporter%22%2Ctier%21%3D%22ephemeral%22%7D+%3D%3D+0&g0.tab=1"
+            "generatorURL": "http://prometheus.int/graph?g0.expr=up%7Bjob%3D%22node-exporter%22%2Ctier%21%3D%22ephemeral%22%7D+%3D%3D+0&g0.tab=1",
+            "fingerprint": "dd19ae3d4e06ac55"
         }
     ],
     "groupLabels": {
