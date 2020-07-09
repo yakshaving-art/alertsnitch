@@ -9,6 +9,7 @@
 COMMIT_ID := `git log -1 --format=%H`
 COMMIT_DATE := `git log -1 --format=%aI`
 VERSION := $${CI_COMMIT_TAG:-SNAPSHOT-$(COMMIT_ID)}
+SHELL := /bin/bash
 
 GOOS ?= linux
 GOARCH ?= amd64
@@ -81,6 +82,7 @@ bootstrap_local_testing: ### builds and bootstraps a local integration testing e
 	done
 	@echo "Bootstrapping model"
 	@docker exec alertsnitch-mysql sh -c "exec mysql -uroot -p$(MYSQL_ROOT_PASSWORD) $(MYSQL_DATABASE) < /db.scripts/0.0.1-bootstrap.sql"
+	@docker exec alertsnitch-mysql sh -c "exec mysql -uroot -p$(MYSQL_ROOT_PASSWORD) $(MYSQL_DATABASE) < /db.scripts/0.1.0-fingerprint.sql"
 	@echo "Everything is ready to run 'make integration'; remember to teardown_local_testing when you are done"
 
 

@@ -74,7 +74,6 @@ CREATE TABLE `Alert` (
     `startsAt` DATETIME NOT NULL,
     `endsAt` DATETIME DEFAULT NULL,
 	`generatorURL` TEXT NOT NULL,
-	`fingerprint` TEXT NOT NULL,
     FOREIGN KEY (alertGroupID) REFERENCES AlertGroup (ID) ON DELETE CASCADE,
 	PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

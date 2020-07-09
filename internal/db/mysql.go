@@ -12,7 +12,7 @@ import (
 )
 
 // SupportedModel stores the model that is supported by this application
-const SupportedModel = "0.0.1"
+const SupportedModel = "0.1.0"
 
 // MySQLDB A database that does nothing
 type MySQLDB struct {
@@ -99,12 +99,12 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 			if alert.EndsAt.Before(alert.StartsAt) {
 				result, err = tx.Exec(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, generatorURL, fingerprint)
-				VALUES (?, ?, ?, ?)`,
+				VALUES (?, ?, ?, ?, ?)`,
 					alertGroupID, alert.Status, alert.StartsAt, alert.GeneratorURL, alert.Fingerprint)
 			} else {
 				result, err = tx.Exec(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, endsAt, generatorURL, fingerprint)
-				VALUES (?, ?, ?, ?, ?)`,
+				VALUES (?, ?, ?, ?, ?, ?)`,
 					alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL, alert.Fingerprint)
 			}
 			if err != nil {
@@ -191,7 +191,7 @@ func (d MySQLDB) CheckModel() error {
 	}
 
 	if model != SupportedModel {
-		return fmt.Errorf("model '%s' is not supported by this application (%s)", model, SupportedModel)
+		return fmt.Errorf("database model '%s' is not supported by this application (%s)", model, SupportedModel)
 	}
 
 	return nil

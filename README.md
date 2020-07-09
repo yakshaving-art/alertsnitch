@@ -25,9 +25,11 @@ graph TD
 ```
 
 Simply install to your $GOPATH using your GO tools
+
 ```sh
 $ go get gitlab.com/yakshaving.art/alertsnitch`
 ```
+
 ## Requirements
 
 To run Alertsnitch requires a MySQL database to write to.
@@ -67,7 +69,9 @@ $ docker run --rm \
     -e ALERTSNITCH_MYSQL_DSN \
     registry.gitlab.com/yakshaving.art/alertsnitch
 ```
+
 ### To run in ubuntu system, open terminal and run the following
+
 **First copy the alertsnitch binary from your $GOPATH to /usr/local/bin**
 ```sh
 $ sudo cp ~/go/bin/alertsnitch /usr/local/bin
