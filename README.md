@@ -47,6 +47,7 @@ $ mysql --user=${MYSQL_USER} -p -e "CREATE DATABASE alertsnitch CHARACTER SET ut
 $ mysql --user=${MYSQL_USER} -p -e "CREATE USER 'alertsnitch'@'%' IDENTIFIED BY '${PASSWORD}';"
 $ mysql --user=${MYSQL_USER} -p -e "GRANT ALL PRIVILEGES ON alertsnitch.* TO 'alertsnitch'@'%' IDENTIFIED BY '${PASSWORD}';"
 $ mysql --user=alertsnitch -p${PASSWORD} alertsnitch < db.d/0.0.1-bootstrap.sql
+$ mysql --user=alertsnitch -p${PASSWORD} alertsnitch < db.d/0.1.0-fingerprint.sql
 ```
 
 ### Sample DSN
