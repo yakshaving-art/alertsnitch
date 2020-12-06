@@ -28,7 +28,7 @@ test_mysql:
   - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}" < db.d/mysql/0.0.1-bootstrap.sql
   - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}" < db.d/mysql/0.1.0-fingerprint.sql
   - go mod vendor
-  - make integration
+  - ALERTSNITCH_BACKEND=mysql make integration
 
 test_postgres:
   stage: build
@@ -48,7 +48,7 @@ test_postgres:
   - psql -f db.d/postgres/0.0.1-bootstrap.sql ${POSTGRES_DB}
   - psql -f db.d/postgres/0.1.0-fingerprint.sql ${POSTGRES_DB}
   - go mod vendor
-  - make integration
+  - ALERTSNITCH_BACKEND=postgres make integration
 
 build:
   stage: build
