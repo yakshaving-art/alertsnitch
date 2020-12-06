@@ -11,12 +11,6 @@ import (
 	"gitlab.com/yakshaving.art/alertsnitch/internal/metrics"
 )
 
-<<<<<<< HEAD
-// SupportedModel stores the model that is supported by this application
-const SupportedModel = "0.1.0"
-
-=======
->>>>>>> Add postgres support
 // MySQLDB A database that does nothing
 type MySQLDB struct {
 	db *sql.DB
