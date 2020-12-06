@@ -39,9 +39,9 @@ test_postgres:
     POSTGRES_DB: alertsnitch
     POSTGRES_USER: alertsnitch
     POSTGRES_PASSWORD: mysql_har_har
-    PG_HOST: postgres
-    PG_USER: ${POSTGRES_USER}
-    PG_PASSWORD: ${POSTGRES_PASSWORD}
+    PGHOST: postgres
+    PGUSER: ${POSTGRES_USER}
+    PGPASSWORD: ${POSTGRES_PASSWORD}
     ALERTSNITCH_DSN: "postgresql://${POSTGRES_USER}:@${PG_HOST}:5432/${POSTGRES_DB}?sslmode=disable"
     ALERTSNITCH_BACKEND: postgres
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
