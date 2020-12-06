@@ -20,7 +20,8 @@ test_mysql:
   variables:
     MYSQL_DATABASE: alertsnitch
     MYSQL_ROOT_PASSWORD: mysql
-    ALERTSNITCH_MYSQL_DSN: "root:${MYSQL_ROOT_PASSWORD}@tcp(mysql)/${MYSQL_DATABASE}"
+    ALERTSNITCH_DSN: "root:${MYSQL_ROOT_PASSWORD}@tcp(mysql)/${MYSQL_DATABASE}"
+    ALERTSNITCH_BACKEND: mysql
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
   script:
   - apk --no-cache add mysql-client
@@ -28,7 +29,7 @@ test_mysql:
   - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}" < db.d/mysql/0.0.1-bootstrap.sql
   - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}" < db.d/mysql/0.1.0-fingerprint.sql
   - go mod vendor
-  - ALERTSNITCH_BACKEND=mysql make integration
+  -  make integration
 
 test_postgres:
   stage: build
@@ -41,14 +42,15 @@ test_postgres:
     PG_HOST: postgres
     PG_USER: ${POSTGRES_USER}
     PG_PASSWORD: ${POSTGRES_PASSWORD}
-    ALERTSNITCH_POSTGRES_DSN: "postgresql://${POSTGRES_USER}:@${PG_HOST}:5432/${POSTGRES_DB}?sslmode=disable"
+    ALERTSNITCH_DSN: "postgresql://${POSTGRES_USER}:@${PG_HOST}:5432/${POSTGRES_DB}?sslmode=disable"
+    ALERTSNITCH_BACKEND: postgres
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
   script:
   - apk --no-cache add postgres-client
   - psql -f db.d/postgres/0.0.1-bootstrap.sql ${POSTGRES_DB}
   - psql -f db.d/postgres/0.1.0-fingerprint.sql ${POSTGRES_DB}
   - go mod vendor
-  - ALERTSNITCH_BACKEND=postgres make integration
+  - make integration
 
 build:
   stage: build
