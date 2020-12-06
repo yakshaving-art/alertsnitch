@@ -46,7 +46,7 @@ test_postgres:
     ALERTSNITCH_BACKEND: postgres
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
   script:
-  - apk --no-cache add postgres-client
+  - apk --no-cache add postgresql-client
   - psql -f db.d/postgres/0.0.1-bootstrap.sql ${POSTGRES_DB}
   - psql -f db.d/postgres/0.1.0-fingerprint.sql ${POSTGRES_DB}
   - go mod vendor
