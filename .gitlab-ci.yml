@@ -6,24 +6,47 @@ stages:
 
 variables:
   CGO_ENABLED: 0
-  MYSQL_DATABASE: alertsnitch
-  MYSQL_ROOT_PASSWORD: mysql
-  ALERTSNITCH_MYSQL_DSN: "root:${MYSQL_ROOT_PASSWORD}@tcp(mysql)/${MYSQL_DATABASE}"
+  GOCACHE: ${CI_PROJECT_DIR}/.cache/go-build
 
-cache:
-  paths:
-  - vendor
 
-test:
+test_mysql:
   stage: build
+  cache:
+    key: build-cache
+    paths:
+    - ${CI_PROJECT_DIR}/.cache/go-build
   services:
   - mysql:5.7
+  variables:
+    MYSQL_DATABASE: alertsnitch
+    MYSQL_ROOT_PASSWORD: mysql
+    ALERTSNITCH_MYSQL_DSN: "root:${MYSQL_ROOT_PASSWORD}@tcp(mysql)/${MYSQL_DATABASE}"
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
   script:
   - apk --no-cache add mysql-client
   - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
-  - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}" < db.d/0.0.1-bootstrap.sql
-  - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}" < db.d/0.1.0-fingerprint.sql
+  - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}" < db.d/mysql/0.0.1-bootstrap.sql
+  - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}" < db.d/mysql/0.1.0-fingerprint.sql
+  - go mod vendor
+  - make integration
+
+test_postgres:
+  stage: build
+  services:
+  - postgres:11
+  variables:
+    POSTGRES_DB: alertsnitch
+    POSTGRES_USER: alertsnitch
+    POSTGRES_PASSWORD: mysql_har_har
+    PG_HOST: postgres
+    PG_USER: ${POSTGRES_USER}
+    PG_PASSWORD: ${POSTGRES_PASSWORD}
+    ALERTSNITCH_POSTGRES_DSN: "postgresql://${POSTGRES_USER}:@${PG_HOST}:5432/${POSTGRES_DB}?sslmode=disable"
+  coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
+  script:
+  - apk --no-cache add postgres-client
+  - psql -f db.d/postgres/0.0.1-bootstrap.sql ${POSTGRES_DB}
+  - psql -f db.d/postgres/0.1.0-fingerprint.sql ${POSTGRES_DB}
   - go mod vendor
   - make integration
 

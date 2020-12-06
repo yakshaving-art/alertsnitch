@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+
 	"github.com/stretchr/testify/assert"
 
 	"gitlab.com/yakshaving.art/alertsnitch/internal"
@@ -15,10 +17,11 @@ import (
 	"gitlab.com/yakshaving.art/alertsnitch/internal/webhook"
 )
 
-
 func TestPingingDatabaseWorks(t *testing.T) {
+	backend := os.Getenv("ALERTSNITCH_BACKEND")
+
 	a := assert.New(t)
-	driver, err := db.ConnectMySQL(connectionArgs())
+	driver, err := db.Connect(backend, connectionArgs())
 	a.NoError(err)
 	a.NotNilf(driver, "database driver is nil?")
 	a.NoErrorf(driver.Ping(), "failed to ping database")
@@ -34,7 +37,9 @@ func TestSavingAnAlertWorks(t *testing.T) {
 	data, err := webhook.Parse(b)
 	a.NoError(err)
 
-	driver, err := db.ConnectMySQL(connectionArgs())
+	backend := os.Getenv("ALERTSNITCH_BACKEND")
+
+	driver, err := db.Connect(backend, connectionArgs())
 	a.NoError(err)
 
 	a.NoError(driver.Save(data))
@@ -49,7 +54,8 @@ func TestSavingAFiringAlertWorks(t *testing.T) {
 	data, err := webhook.Parse(b)
 	a.NoError(err)
 
-	driver, err := db.ConnectMySQL(connectionArgs())
+	backend := os.Getenv("ALERTSNITCH_BACKEND")
+	driver, err := db.Connect(backend, connectionArgs())
 	a.NoError(err)
 
 	a.NoError(driver.Save(data))
@@ -57,7 +63,7 @@ func TestSavingAFiringAlertWorks(t *testing.T) {
 
 func connectionArgs() db.ConnectionArgs {
 	return db.ConnectionArgs{
-		DSN: os.Getenv(internal.MySQLDSNVar),
+		DSN:                    os.Getenv(internal.DSNVar),
 		MaxIdleConns:           1,
 		MaxOpenConns:           2,
 		MaxConnLifetimeSeconds: 600,
