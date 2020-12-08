@@ -41,17 +41,14 @@ test_postgres:
     POSTGRES_USER: runner
     POSTGRES_PASSWORD: ""
     POSTGRES_HOST_AUTH_METHOD: trust
-    PGHOST: postgres
-    PGUSER: ${POSTGRES_USER}
-    PGPASSWORD: ${POSTGRES_PASSWORD}
-    ALERTSNITCH_DSN: "sslmode=disable user=${PGUSER} password='' host=${PGHOST} database=${POSTGRES_DB}"
+    ALERTSNITCH_DSN: "sslmode=disable user=${POSTGRES_USER} password='' host=postgres database=${POSTGRES_DB}"
     ALERTSNITCH_BACKEND: postgres
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
   script:
   - apk --no-cache add postgresql-client bash
-  - bash script.d/waitforit.sh postgres:5432 -- echo "postgres is up"
-  - psql -f db.d/postgres/0.0.1-bootstrap.sql ${POSTGRES_DB}
-  - psql -f db.d/postgres/0.1.0-fingerprint.sql ${POSTGRES_DB}
+  - bash script.d/waitforit.sh postgres:5432
+  - psql -h "postgres" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -f db.d/postgres/0.0.1-bootstrap.sql
+  - psql -h "postgres" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -f db.d/postgres/0.1.0-fingerprint.sql
   - go mod vendor
   - make integration
 
