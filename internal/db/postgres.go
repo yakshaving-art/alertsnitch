@@ -51,7 +51,8 @@ func (d PostgresDB) Save(data *internal.AlertGroup) error {
 			VALUES (current_timestamp, $1, $2, $3, $4) RETURNING ID`, data.Receiver, data.Status, data.ExternalURL, data.GroupKey)
 
 		var alertGroupID int64
-		if err := r.Scan(&alertGroupID); err != nil {
+		err := r.Scan(&alertGroupID)
+		if err != nil {
 			return fmt.Errorf("failed to insert into AlertGroups: %s", err)
 		}
 
