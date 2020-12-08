@@ -20,7 +20,7 @@ CREATE INDEX ON AlertGroup (status, time);
 
 CREATE TABLE GroupLabel (
     ID SERIAL NOT NULL,
-    AlertGroupID INT NOT NULL references AlertGroup(ID)),
+    AlertGroupID INT NOT NULL references AlertGroup(ID),
     GroupLabel VARCHAR(100) NOT NULL,
     Value VARCHAR(1000) NOT NULL
 );
@@ -43,14 +43,14 @@ CREATE TABLE Alert (
 	ID SERIAL NOT NULL,
     alertGroupID INT NOT NULL REFERENCES AlertGroup (ID),
 	status VARCHAR(50) NOT NULL,
-    startsAt DATETIME NOT NULL,
-    endsAt DATETIME DEFAULT NULL,
+    startsAt TIMESTAMP NOT NULL,
+    endsAt TIMESTAMP NULL,
 	generatorURL TEXT NOT NULL,
 	fingerprint TEXT NOT NULL
 );
 
 CREATE TABLE AlertLabel (
-	ID INT NOT NULL AUTO_INCREMENT,
+	ID SERIAL NOT NULL,
     AlertID INT NOT NULL REFERENCES Alert (ID),
     Label VARCHAR(100) NOT NULL,
     Value VARCHAR(1000) NOT NULL
