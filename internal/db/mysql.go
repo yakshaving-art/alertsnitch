@@ -19,7 +19,7 @@ type MySQLDB struct {
 // ConnectMySQL connect to a MySQL database using the provided data source name
 func connectMySQL(args ConnectionArgs) (*MySQLDB, error) {
 	if args.DSN == "" {
-		return nil, fmt.Errorf("Empty DSN provided, can't connect to database")
+		return nil, fmt.Errorf("Empty DSN provided, can't connect to MySQL database")
 	}
 
 	connection, err := sql.Open("mysql", args.DSN)

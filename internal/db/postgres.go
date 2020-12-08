@@ -19,12 +19,12 @@ type PostgresDB struct {
 // ConnectPG connect to a Postgres database using the provided data source name
 func connectPG(args ConnectionArgs) (*PostgresDB, error) {
 	if args.DSN == "" {
-		return nil, fmt.Errorf("Empty DSN provided, can't connect to database")
+		return nil, fmt.Errorf("Empty DSN provided, can't connect to Postgres database")
 	}
 
 	connection, err := sql.Open("postgres", args.DSN)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open MySQL connection: %s", err)
+		return nil, fmt.Errorf("failed to open Postgres connection: %s", err)
 	}
 
 	connection.SetMaxIdleConns(args.MaxIdleConns)
