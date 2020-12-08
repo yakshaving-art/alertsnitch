@@ -37,12 +37,13 @@ test_postgres:
   - postgres:11
   variables:
     POSTGRES_DB: alertsnitch
-    POSTGRES_USER: alertsnitch
-    POSTGRES_PASSWORD: mysql_har_har
+    POSTGRES_USER: runner
+    POSTGRES_PASSWORD: ""
+    POSTGRES_HOST_AUTH_METHOD: trust
     PGHOST: postgres
     PGUSER: ${POSTGRES_USER}
     PGPASSWORD: ${POSTGRES_PASSWORD}
-    ALERTSNITCH_DSN: "postgresql://${POSTGRES_USER}:@${PG_HOST}:5432/${POSTGRES_DB}?sslmode=disable"
+    ALERTSNITCH_DSN: "sslmode=disable user=${PGUSER} password='' host=${PGHOST} database=${POSTGRES_DB}"
     ALERTSNITCH_BACKEND: postgres
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
   script:
