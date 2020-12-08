@@ -1,28 +1,31 @@
-# Alert Snitch
+# AlertSnitch
 
-Captures Prometheus alertmanager alerts and writes them in a MySQL instance
+Captures Prometheus AlertManager alerts and writes them in a MySQL or
+Postgres database for future examination.
+
+Because given a noisy enough alerting environment, offline querying
+capabilities of triggered alerts is extremely valuable.
 
 ## How does it work
 
-Given a noisy enough alerting environment, offline querying capabilities of
-triggered alerts is extremely valuable.
-
-1. You stand up one of these
-1. You configure the alertmanager to point at it
-1. Every alert that gets triggered reaches your MySQL database
-1. Profit
+1. You stand up one of these however you like (multi-arch Docker images provided)
+1. You setup AlertManager to point at it and propagate your alerts in.
+1. Every alert that gets triggered reaches your database.
+1. Profit.
 
 ```mermaid
 graph TD
     A[alertmanager] -->|POST|B(AlertSnitch)
-    B --> |Save|C(MySQL Database)
+    B --> |Save|C(MySQL/PG Database)
     C -.-|Graph|G[Grafana]
-    C -.-|Query|D[MySQL Client]
+    C -.-|Query|D[MySQL/PG Client]
     style B fill:#f9f,stroke:#333,stroke-width:1px
     style C fill:#00A0A0,stroke:#333,stroke-width:1px
     style D fill:#00C000
     style G fill:#00C000
 ```
+
+## Local install
 
 Simply install to your $GOPATH using your GO tools
 
@@ -32,68 +35,56 @@ $ go get gitlab.com/yakshaving.art/alertsnitch`
 
 ## Requirements
 
-To run Alertsnitch requires a MySQL database to write to.
+To run AlertSnitch requires a MySQL or Postgres database to write to.
 
-The database must be initialized with alertsnitch bootstrap and must have all
-the available migrations executed.
+The database must be initialized with AlertSnitch model.
 
 AlertSnitch will not become online until the model is up to date with the
-expected one. For your ease some sample codes are provided hope that helps.
+expected one. Bootstrapping scripts are provided in the [scripts][./script.d]
+folder.
 
-### Sample bootstrapping
+## Configuration
+
+### MySQL
+
+For specifics about how to set up the MySQL DSN refer to [Go MySQL client driver][1]
+
+This is a sample of a DSN that would connect to the local host over a Unix socket
 
 ```bash
-$ mysql --user=${MYSQL_USER} -p -e "CREATE DATABASE alertsnitch CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-$ mysql --user=${MYSQL_USER} -p -e "CREATE USER 'alertsnitch'@'%' IDENTIFIED BY '${PASSWORD}';"
-$ mysql --user=${MYSQL_USER} -p -e "GRANT ALL PRIVILEGES ON alertsnitch.* TO 'alertsnitch'@'%' IDENTIFIED BY '${PASSWORD}';"
-$ mysql --user=alertsnitch -p${PASSWORD} alertsnitch < db.d/0.0.1-bootstrap.sql
-$ mysql --user=alertsnitch -p${PASSWORD} alertsnitch < db.d/0.1.0-fingerprint.sql
+export ALERTSNITCH_BACKEND="mysql"
+export ALERTSNITCH_DSN="${MYSQL_USER}:${MYSQL_PASSWORD}@/${MYSQL_DATABASE}"
 ```
 
-### Sample DSN
-
-For specifics about how to set up the DSN refer to [Go MySQL client driver][1]
-
-This is a sample of a DSN that would connect to the local host over a unix socket
+### Postgres
 
 ```bash
-export ALERTSNITCH_MYSQL_DSN="alertsnitch:${PASSWORD}@/alertsnitch"
+export ALERTSNITCH_BACKEND="postgres"
+export ALERTSNITCH_DSN="sslmode=disable user=${PGUSER} password=${PGPASSWORD} host=${PGHOST} database=${PGDATABASE}"
 ```
 
 ## How to run
-### Running alertsnitch in Docker
+
+### Running with Docker
+
 **Run using docker in this very registry, for ex.**
 
 ```sh
 $ docker run --rm \
     -p 9567:9567 \
-    -e ALERTSNITCH_MYSQL_DSN \
+    -e ALERTSNITCH_DSN \
+    -e ALERTSNITCH_BACKEND \
     registry.gitlab.com/yakshaving.art/alertsnitch
 ```
 
-### To run in ubuntu system, open terminal and run the following
+### Running Manually
 
-**First copy the alertsnitch binary from your $GOPATH to /usr/local/bin**
-```sh
-$ sudo cp ~/go/bin/alertsnitch /usr/local/bin
-```
-**Now run alertsnitch as**
-```sh
-$ alertsnitch
-```
-**Or to simply see the alerts received on your terminal run :**
-```sh
-$ alertsnitch --dryrun
-```
-### Arguments
+1. Open a terminal and run the following
+1. Copy the AlertSnitch binary from your $GOPATH to `/usr/local/bin` with `sudo cp ~/go/bin/alertsnitch /usr/local/bin`
+1. Now run AlertSnitch as with just `alertsnitch`
+   - To just see the alerts that are being received, use the *null* backend with `ALERTSNITCH_BACKEND=null`
 
-* **-debug** dumps the received webhook payloads to the log so you can understand what is going on
-* **-dryrun** uses a null db driver that writes received webhooks to stdout
-* **-listen.address** _string_ address in which to listen for http requests (default ":9567")
-* **-version** prints the version and exit
-
-
-## Usage
+### Setting up in AlertManager
 
 Once AlertSnitch is up and running, configure the Prometheus Alert Manager to
 forward every alert to it on the `/webhooks` path.
@@ -103,10 +94,10 @@ forward every alert to it on the `/webhooks` path.
 receivers:
 - name: alertsnitch
   webhook_configs:
-    - url: http://<alertsnitch-ip>:9567/webhook
+    - url: http://<alertsnitch-host-or-ip>:9567/webhook
 ```
 
-And add the route
+Then add the route
 
 ```yaml
 # We want to send all alerts to alertsnitch and then continue to the
@@ -117,10 +108,23 @@ route:
     continue: true
 ```
 
-## Readiness probe
+### Command line arguments
+
+* **-database-backend** sets the database backend to connect to, supported are `mysql`, `postgres` and `null`
+* **-debug** dumps the received WebHook payloads to the log so you can understand what is going on
+* **-listen.address** _string_ address in which to listen for HTTP requests (default ":9567")
+* **-version** prints the version and exit
+
+### Environment variables
+
+- **ALERTSNITCH_DSN** *required* database connection query string
+- **ALERTSNITCH_ADDR** same as **-listen.address**
+- **ALERTSNITCH_BACKEND**  same as **-database-backend**
+
+### Readiness probe
 
 AlertSnitch offers a `/-/ready` endpoint which will return 200 if the
-application is ready to accept webhook posts.
+application is ready to accept WebHook posts.
 
 During startup AlertSnitch will probe the MySQL database and the database
 model version. If everything is as expected it will set itself as ready.
@@ -128,30 +132,30 @@ model version. If everything is as expected it will set itself as ready.
 In case of failure it will return a 500 and will write the error in the
 response payload.
 
-## Liveliness probe
+### Liveliness probe
 
 AlertSnitch offers a `/-/health` endpoint which will return 200 as long as
-the MySQL database is reachable.
+the MySQL/Postgres database is reachable.
 
 In case of error it will return a 500 and will write the error in the
 response payload.
 
-## Metrics
+### Metrics
 
-AlertSnitch provides Prometheus metrics on `/metrics` as per prometheus
+AlertSnitch provides Prometheus metrics on `/metrics` as per Prometheus
 convention.
 
-## Security
+### Security
 
 There is no offering of security of any kind. AlertSnitch is not ment to be
 exposed to the internet but to be executed in an internal network reachable
 by the alert manager.
 
-## Grafana Compatibility
+### Grafana Compatibility
 
-AlertSnitch writes alerts in such a way thay they can be explored using
-Grafana's MySQL Data Source plugin. Refer to Grafana documentation for
-further instructions.
+AlertSnitch writes alerts in such a way that they can be explored using
+Grafana's MySQL/Postgres Data Source plugin. Refer to Grafana documentation
+for further instructions.
 
 ## Testing locally
 

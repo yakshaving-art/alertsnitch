@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-// MySQLDSNVar Environment variable in which the DSN is stored
-const MySQLDSNVar = "ALERTSNITCH_MYSQL_DSN"
+// DSNVar Environment variable in which the DSN is stored
+const DSNVar = "ALERTSNITCH_DSN"
 
 // Storer saves an Alert Data into a persistence engine
 type Storer interface {

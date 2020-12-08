@@ -11,27 +11,27 @@ import (
 	"gitlab.com/yakshaving.art/alertsnitch/internal/metrics"
 )
 
-// MySQLDB A database that does nothing
-type MySQLDB struct {
+// PostgresDB A database that does nothing
+type PostgresDB struct {
 	db *sql.DB
 }
 
-// ConnectMySQL connect to a MySQL database using the provided data source name
-func connectMySQL(args ConnectionArgs) (*MySQLDB, error) {
+// ConnectPG connect to a Postgres database using the provided data source name
+func connectPG(args ConnectionArgs) (*PostgresDB, error) {
 	if args.DSN == "" {
-		return nil, fmt.Errorf("Empty DSN provided, can't connect to MySQL database")
+		return nil, fmt.Errorf("Empty DSN provided, can't connect to Postgres database")
 	}
 
-	connection, err := sql.Open("mysql", args.DSN)
+	connection, err := sql.Open("postgres", args.DSN)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open MySQL connection: %s", err)
+		return nil, fmt.Errorf("failed to open Postgres connection: %s", err)
 	}
 
 	connection.SetMaxIdleConns(args.MaxIdleConns)
 	connection.SetMaxOpenConns(args.MaxOpenConns)
 	connection.SetConnMaxLifetime(time.Duration(args.MaxConnLifetimeSeconds) * time.Second)
 
-	database := &MySQLDB{
+	database := &PostgresDB{
 		db: connection,
 	}
 
@@ -44,24 +44,22 @@ func connectMySQL(args ConnectionArgs) (*MySQLDB, error) {
 }
 
 // Save implements Storer interface
-func (d MySQLDB) Save(data *internal.AlertGroup) error {
+func (d PostgresDB) Save(data *internal.AlertGroup) error {
 	return d.unitOfWork(func(tx *sql.Tx) error {
-		r, err := tx.Exec(`
+		r := tx.QueryRow(`
 			INSERT INTO AlertGroup (time, receiver, status, externalURL, groupKey)
-			VALUES (now(), ?, ?, ?, ?)`, data.Receiver, data.Status, data.ExternalURL, data.GroupKey)
+			VALUES (current_timestamp, $1, $2, $3, $4) RETURNING ID`, data.Receiver, data.Status, data.ExternalURL, data.GroupKey)
+
+		var alertGroupID int64
+		err := r.Scan(&alertGroupID)
 		if err != nil {
 			return fmt.Errorf("failed to insert into AlertGroups: %s", err)
-		}
-
-		alertGroupID, err := r.LastInsertId() // alertGroupID
-		if err != nil {
-			return fmt.Errorf("failed to get AlertGroups inserted id: %s", err)
 		}
 
 		for k, v := range data.GroupLabels {
 			_, err := tx.Exec(`
 				INSERT INTO GroupLabel (alertGroupID, GroupLabel, Value)
-				VALUES (?, ?, ?)`, alertGroupID, k, v)
+				VALUES ($1, $2, $3)`, alertGroupID, k, v)
 			if err != nil {
 				return fmt.Errorf("failed to insert into GroupLabel: %s", err)
 			}
@@ -69,7 +67,7 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 		for k, v := range data.CommonLabels {
 			_, err := tx.Exec(`
 				INSERT INTO CommonLabel (alertGroupID, Label, Value)
-				VALUES (?, ?, ?)`, alertGroupID, k, v)
+				VALUES ($1, $2, $3)`, alertGroupID, k, v)
 			if err != nil {
 				return fmt.Errorf("failed to insert into CommonLabel: %s", err)
 			}
@@ -77,38 +75,33 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 		for k, v := range data.CommonAnnotations {
 			_, err := tx.Exec(`
 				INSERT INTO CommonAnnotation (alertGroupID, Annotation, Value)
-				VALUES (?, ?, ?)`, alertGroupID, k, v)
+				VALUES ($1, $2, $3)`, alertGroupID, k, v)
 			if err != nil {
 				return fmt.Errorf("failed to insert into CommonAnnotation: %s", err)
 			}
 		}
 
 		for _, alert := range data.Alerts {
-			var result sql.Result
 			if alert.EndsAt.Before(alert.StartsAt) {
-				result, err = tx.Exec(`
+				r = tx.QueryRow(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, generatorURL, fingerprint)
-				VALUES (?, ?, ?, ?, ?)`,
+				VALUES ($1, $2, $3, $4, $5) RETURNING ID`,
 					alertGroupID, alert.Status, alert.StartsAt, alert.GeneratorURL, alert.Fingerprint)
 			} else {
-				result, err = tx.Exec(`
+				r = tx.QueryRow(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, endsAt, generatorURL, fingerprint)
-				VALUES (?, ?, ?, ?, ?, ?)`,
+				VALUES ($1, $2, $3, $4, $5, $6) RETURNING ID`,
 					alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL, alert.Fingerprint)
 			}
-			if err != nil {
+			var alertID int64
+			if err := r.Scan(&alertID); err != nil {
 				return fmt.Errorf("failed to insert into Alert: %s", err)
-			}
-
-			alertID, err := result.LastInsertId()
-			if err != nil {
-				return fmt.Errorf("failed to get Alert inserted id: %s", err)
 			}
 
 			for k, v := range alert.Labels {
 				_, err := tx.Exec(`
 					INSERT INTO AlertLabel (AlertID, Label, Value)
-					VALUES (?, ?, ?)`, alertID, k, v)
+					VALUES ($1, $2, $3)`, alertID, k, v)
 				if err != nil {
 					return fmt.Errorf("failed to insert into AlertLabel: %s", err)
 				}
@@ -116,7 +109,7 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 			for k, v := range alert.Annotations {
 				_, err := tx.Exec(`
 					INSERT INTO AlertAnnotation (AlertID, Annotation, Value)
-					VALUES (?, ?, ?)`, alertID, k, v)
+					VALUES ($1, $2, $3)`, alertID, k, v)
 				if err != nil {
 					return fmt.Errorf("failed to insert into AlertAnnotation: %s", err)
 				}
@@ -127,7 +120,7 @@ func (d MySQLDB) Save(data *internal.AlertGroup) error {
 	})
 }
 
-func (d MySQLDB) unitOfWork(f func(*sql.Tx) error) error {
+func (d PostgresDB) unitOfWork(f func(*sql.Tx) error) error {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %s", err)
@@ -150,7 +143,7 @@ func (d MySQLDB) unitOfWork(f func(*sql.Tx) error) error {
 }
 
 // Ping implements Storer interface
-func (d MySQLDB) Ping() error {
+func (d PostgresDB) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
@@ -163,7 +156,7 @@ func (d MySQLDB) Ping() error {
 }
 
 // CheckModel implements Storer interface
-func (d MySQLDB) CheckModel() error {
+func (d PostgresDB) CheckModel() error {
 	rows, err := d.db.Query("SELECT version FROM Model")
 	if err != nil {
 		return fmt.Errorf("failed to fetch model version from the database: %s", err)
@@ -180,12 +173,12 @@ func (d MySQLDB) CheckModel() error {
 	}
 
 	if model != SupportedModel {
-		return fmt.Errorf("database model '%s' is not supported by this application (%s)", model, SupportedModel)
+		return fmt.Errorf("model '%s' is not supported by this application (%s)", model, SupportedModel)
 	}
 
 	return nil
 }
 
-func (MySQLDB) String() string {
-	return "mysql database driver"
+func (PostgresDB) String() string {
+	return "postgres database driver"
 }
