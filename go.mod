@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 	github.com/davecgh/go-spew v1.1.1
-	github.com/go-sql-driver/mysql v1.4.1
+	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.2.0
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/mux v1.6.2
