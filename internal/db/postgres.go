@@ -82,25 +82,20 @@ func (d PostgresDB) Save(data *internal.AlertGroup) error {
 		}
 
 		for _, alert := range data.Alerts {
-			var result sql.Result
 			if alert.EndsAt.Before(alert.StartsAt) {
-				result, err = tx.Exec(`
+				r = tx.QueryRow(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, generatorURL, fingerprint)
-				VALUES ($1, $2, $3, $4, $5)`,
+				VALUES ($1, $2, $3, $4, $5) RETURNING ID`,
 					alertGroupID, alert.Status, alert.StartsAt, alert.GeneratorURL, alert.Fingerprint)
 			} else {
-				result, err = tx.Exec(`
+				r = tx.QueryRow(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, endsAt, generatorURL, fingerprint)
-				VALUES ($1, $2, $3, $4, $5)`,
+				VALUES ($1, $2, $3, $4, $5, $6) RETURNING ID`,
 					alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL, alert.Fingerprint)
 			}
-			if err != nil {
+			var alertID int64
+			if err := r.Scan(&alertID); err != nil {
 				return fmt.Errorf("failed to insert into Alert: %s", err)
-			}
-
-			alertID, err := result.LastInsertId()
-			if err != nil {
-				return fmt.Errorf("failed to get Alert inserted id: %s", err)
 			}
 
 			for k, v := range alert.Labels {
