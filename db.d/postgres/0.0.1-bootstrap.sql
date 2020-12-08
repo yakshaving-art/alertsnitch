@@ -4,7 +4,7 @@ CREATE TABLE Model (
     CONSTRAINT single_row CHECK (ID = 1)
 );
 
-INSERT INTO Model (version) VALUES ("0.0.1");
+INSERT INTO Model (version) VALUES ('0.0.1');
 
 -- Create the rest of the tables
 CREATE TABLE AlertGroup (
