@@ -7,6 +7,7 @@ import (
 
 	"database/sql"
 
+	"github.com/sirupsen/logrus"
 	"gitlab.com/yakshaving.art/alertsnitch/internal"
 	"gitlab.com/yakshaving.art/alertsnitch/internal/metrics"
 )
@@ -21,6 +22,8 @@ func connectMySQL(args ConnectionArgs) (*MySQLDB, error) {
 	if args.DSN == "" {
 		return nil, fmt.Errorf("Empty DSN provided, can't connect to MySQL database")
 	}
+
+	logrus.Debugf("Connecting to MySQL database with DSN: %s", args.DSN)
 
 	connection, err := sql.Open("mysql", args.DSN)
 	if err != nil {
@@ -39,6 +42,7 @@ func connectMySQL(args ConnectionArgs) (*MySQLDB, error) {
 	if err != nil {
 		return nil, err
 	}
+	logrus.Debug("Connected to MySQL database")
 
 	return database, database.CheckModel()
 }
@@ -156,9 +160,12 @@ func (d MySQLDB) Ping() error {
 
 	if err := d.db.PingContext(ctx); err != nil {
 		metrics.DatabaseUp.Set(0)
+		logrus.Debugf("Failed to ping database: %s", err)
 		return err
 	}
 	metrics.DatabaseUp.Set(1)
+
+	logrus.Debugf("Pinged database...")
 	return nil
 }
 

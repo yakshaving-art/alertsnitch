@@ -1,12 +1,31 @@
 version: '3.1'
 
 services:
-  db:
+  alertsnitch:
+    image: registry.gitlab.com/yakshaving.art/alertsnitch:0.2
+    ports:
+    - "9567:9567"
+    environment:
+      ALERTSNITCH_DSN: "alertsnitch:alertsnitch@tcp(mysqldb)/alertsnitch"
+      ALERSTNITCH_BACKEND: "mysql"
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+
+  mysqldb:
+    restart: always
     image: mysql:5.7
     command: --default-authentication-plugin=mysql_native_password
-    restart: always
+    volumes:
+      - ./db.d/mysql:/docker-entrypoint-initdb.d
     ports:
     - "3306:3306"
     environment:
       MYSQL_DATABASE: alertsnitch
-      MYSQL_ROOT_PASSWORD: "password"
+      MYSQL_USER: "alertsnitch"
+      MYSQL_PASSWORD: "alertsnitch"
+      MYSQL_ROOT_PASSWORD: "root"
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-proot"]
+      timeout: 20s
+      retries: 10
