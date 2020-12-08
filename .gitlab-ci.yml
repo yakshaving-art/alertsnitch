@@ -46,11 +46,8 @@ test_postgres:
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
   script:
   - apk --no-cache add postgresql-client bash
-  - bash script.d/waitforit.sh postgres:5432
-  - psql -h "postgres" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -f db.d/postgres/0.0.1-bootstrap.sql
-  - psql -h "postgres" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -f db.d/postgres/0.1.0-fingerprint.sql
-  - go mod vendor
-  - make integration
+  - bash script.d/populate_postgres.sh
+  - bash script.d/test.sh
 
 build:
   stage: build
