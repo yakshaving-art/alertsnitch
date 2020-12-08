@@ -1,5 +1,5 @@
 ALTER TABLE Alert 
-    ADD `fingerprint` TEXT NOT NULL
+    ADD fingerprint TEXT NOT NULL default ''
 ;
 
-UPDATE `Model`  SET `version`="0.1.0";
+UPDATE Model  SET version='0.1.0';
