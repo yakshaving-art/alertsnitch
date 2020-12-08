@@ -23,7 +23,7 @@ func connectPG(args ConnectionArgs) (*PostgresDB, error) {
 		return nil, fmt.Errorf("Empty DSN provided, can't connect to Postgres database")
 	}
 
-	logrus.Debugf("Connecting to Postgres database with DSN", args.DSN)
+	logrus.Debugf("Connecting to Postgres database with DSN: %s", args.DSN)
 
 	connection, err := sql.Open("postgres", args.DSN)
 	if err != nil {

@@ -23,7 +23,7 @@ func connectMySQL(args ConnectionArgs) (*MySQLDB, error) {
 		return nil, fmt.Errorf("Empty DSN provided, can't connect to MySQL database")
 	}
 
-	logrus.Debugf("Connecting to MySQL database with DSN", args.DSN)
+	logrus.Debugf("Connecting to MySQL database with DSN: %s", args.DSN)
 
 	connection, err := sql.Open("mysql", args.DSN)
 	if err != nil {
