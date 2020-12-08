@@ -3,7 +3,7 @@
 set -EeufCo pipefail
 IFS=$'\t\n'
 
-bash ./waitforit.sh postgres:5432
+bash script.d/waitforit.sh postgres:5432
 
 echo "Creating bootstrapped model"
 psql -h "postgres" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -f db.d/postgres/0.0.1-bootstrap.sql
