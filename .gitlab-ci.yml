@@ -34,7 +34,8 @@ test_mysql:
 test_postgres:
   stage: build
   services:
-  - postgres:11
+  - name: postgres:11
+    alias: postgres
   variables:
     POSTGRES_DB: alertsnitch
     POSTGRES_USER: runner
