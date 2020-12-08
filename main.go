@@ -8,6 +8,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 
+	"github.com/sirupsen/logrus"
+
 	"gitlab.com/yakshaving.art/alertsnitch/internal"
 	"gitlab.com/yakshaving.art/alertsnitch/internal/db"
 	"gitlab.com/yakshaving.art/alertsnitch/internal/server"
@@ -47,6 +49,10 @@ func main() {
 	if args.Version {
 		fmt.Println(version.GetVersion())
 		os.Exit(0)
+	}
+
+	if args.Debug {
+		logrus.SetLevel(logrus.DebugLevel)
 	}
 
 	driver, err := db.Connect(args.DBBackend, db.ConnectionArgs{

@@ -7,6 +7,7 @@ import (
 
 	"database/sql"
 
+	"github.com/sirupsen/logrus"
 	"gitlab.com/yakshaving.art/alertsnitch/internal"
 	"gitlab.com/yakshaving.art/alertsnitch/internal/metrics"
 )
@@ -21,6 +22,8 @@ func connectPG(args ConnectionArgs) (*PostgresDB, error) {
 	if args.DSN == "" {
 		return nil, fmt.Errorf("Empty DSN provided, can't connect to Postgres database")
 	}
+
+	logrus.Debugf("Connecting to Postgres database with DSN", args.DSN)
 
 	connection, err := sql.Open("postgres", args.DSN)
 	if err != nil {
@@ -39,6 +42,7 @@ func connectPG(args ConnectionArgs) (*PostgresDB, error) {
 	if err != nil {
 		return nil, err
 	}
+	logrus.Debugf("Connected to Postgres database")
 
 	return database, database.CheckModel()
 }
@@ -149,9 +153,12 @@ func (d PostgresDB) Ping() error {
 
 	if err := d.db.PingContext(ctx); err != nil {
 		metrics.DatabaseUp.Set(0)
+		logrus.Debugf("Failed to ping database: %s", err)
+
 		return err
 	}
 	metrics.DatabaseUp.Set(1)
+	logrus.Debugf("Pinged database...")
 	return nil
 }
 
