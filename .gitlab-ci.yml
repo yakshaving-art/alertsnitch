@@ -24,12 +24,11 @@ test_mysql:
     ALERTSNITCH_BACKEND: mysql
   coverage: '/^total:\s+\(statements\)\s+(\d+.\d+)%$/'
   script:
-  - apk --no-cache add mysql-client
+  - apk --no-cache add mysql-client bash
   - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
   - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}" < db.d/mysql/0.0.1-bootstrap.sql
   - mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --host=mysql "${MYSQL_DATABASE}" < db.d/mysql/0.1.0-fingerprint.sql
-  - go mod vendor
-  -  make integration
+  - bash script.d/test.sh
 
 test_postgres:
   stage: build
