@@ -46,22 +46,19 @@ func connectPG(args ConnectionArgs) (*PostgresDB, error) {
 // Save implements Storer interface
 func (d PostgresDB) Save(data *internal.AlertGroup) error {
 	return d.unitOfWork(func(tx *sql.Tx) error {
-		r, err := tx.Exec(`
+		r := tx.QueryRow(`
 			INSERT INTO AlertGroup (time, receiver, status, externalURL, groupKey)
-			VALUES (now(), ?, ?, ?, ?)`, data.Receiver, data.Status, data.ExternalURL, data.GroupKey)
-		if err != nil {
-			return fmt.Errorf("failed to insert into AlertGroups: %s", err)
-		}
+			VALUES (current_timestamp, $1, $2, $3, $4) RETURNING ID`, data.Receiver, data.Status, data.ExternalURL, data.GroupKey)
 
-		alertGroupID, err := r.LastInsertId() // alertGroupID
-		if err != nil {
-			return fmt.Errorf("failed to get AlertGroups inserted id: %s", err)
+		var alertGroupID int64
+		if err := r.Scan(&alertGroupID); err != nil {
+			return fmt.Errorf("failed to insert into AlertGroups: %s", err)
 		}
 
 		for k, v := range data.GroupLabels {
 			_, err := tx.Exec(`
 				INSERT INTO GroupLabel (alertGroupID, GroupLabel, Value)
-				VALUES (?, ?, ?)`, alertGroupID, k, v)
+				VALUES ($1, $2, $3)`, alertGroupID, k, v)
 			if err != nil {
 				return fmt.Errorf("failed to insert into GroupLabel: %s", err)
 			}
@@ -69,7 +66,7 @@ func (d PostgresDB) Save(data *internal.AlertGroup) error {
 		for k, v := range data.CommonLabels {
 			_, err := tx.Exec(`
 				INSERT INTO CommonLabel (alertGroupID, Label, Value)
-				VALUES (?, ?, ?)`, alertGroupID, k, v)
+				VALUES ($1, $2, $3)`, alertGroupID, k, v)
 			if err != nil {
 				return fmt.Errorf("failed to insert into CommonLabel: %s", err)
 			}
@@ -77,7 +74,7 @@ func (d PostgresDB) Save(data *internal.AlertGroup) error {
 		for k, v := range data.CommonAnnotations {
 			_, err := tx.Exec(`
 				INSERT INTO CommonAnnotation (alertGroupID, Annotation, Value)
-				VALUES (?, ?, ?)`, alertGroupID, k, v)
+				VALUES ($1, $2, $3)`, alertGroupID, k, v)
 			if err != nil {
 				return fmt.Errorf("failed to insert into CommonAnnotation: %s", err)
 			}
@@ -88,12 +85,12 @@ func (d PostgresDB) Save(data *internal.AlertGroup) error {
 			if alert.EndsAt.Before(alert.StartsAt) {
 				result, err = tx.Exec(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, generatorURL, fingerprint)
-				VALUES (?, ?, ?, ?)`,
+				VALUES ($1, $2, $3, $4, $5)`,
 					alertGroupID, alert.Status, alert.StartsAt, alert.GeneratorURL, alert.Fingerprint)
 			} else {
 				result, err = tx.Exec(`
 				INSERT INTO Alert (alertGroupID, status, startsAt, endsAt, generatorURL, fingerprint)
-				VALUES (?, ?, ?, ?, ?)`,
+				VALUES ($1, $2, $3, $4, $5)`,
 					alertGroupID, alert.Status, alert.StartsAt, alert.EndsAt, alert.GeneratorURL, alert.Fingerprint)
 			}
 			if err != nil {
@@ -108,7 +105,7 @@ func (d PostgresDB) Save(data *internal.AlertGroup) error {
 			for k, v := range alert.Labels {
 				_, err := tx.Exec(`
 					INSERT INTO AlertLabel (AlertID, Label, Value)
-					VALUES (?, ?, ?)`, alertID, k, v)
+					VALUES ($1, $2, $3)`, alertID, k, v)
 				if err != nil {
 					return fmt.Errorf("failed to insert into AlertLabel: %s", err)
 				}
@@ -116,7 +113,7 @@ func (d PostgresDB) Save(data *internal.AlertGroup) error {
 			for k, v := range alert.Annotations {
 				_, err := tx.Exec(`
 					INSERT INTO AlertAnnotation (AlertID, Annotation, Value)
-					VALUES (?, ?, ?)`, alertID, k, v)
+					VALUES ($1, $2, $3)`, alertID, k, v)
 				if err != nil {
 					return fmt.Errorf("failed to insert into AlertAnnotation: %s", err)
 				}
